@@ -1,7 +1,7 @@
-#[macro_use] extern crate rocket;
+#[macro_use]
+extern crate rocket;
 
-mod out;
-use out::*;
+mod driver;
 #[get("/")]
 fn index() -> &'static str {
     "Hello, world!"
@@ -11,4 +11,3 @@ fn index() -> &'static str {
 fn rocket() -> _ {
     rocket::build().mount("/", routes![index])
 }
-

@@ -9,4 +9,5 @@ edition = "2021"
 tokio = {version = "1.33.0", features = ["full"]}
 serde = { version = "1.0", features = ["derive"] }
 mongodb = {version = "2.7.0", features = ["tokio-sync"]}
-rocket = "=0.5.0-rc.3"
+rocket = {version = "=0.5.0-rc.3", features = ["json"]}
+serde_json = "1.0"
