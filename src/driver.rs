@@ -1,19 +1,21 @@
 use mongodb::{
     bson::{doc, oid::ObjectId, to_document},
     error::Error,
-    options::{ClientOptions, DeleteOptions, UpdateOptions},
+    options::{DeleteOptions, UpdateOptions},
     results::{DeleteResult, InsertOneResult, UpdateResult},
-    Client, Collection, Cursor,
+    Collection,
 };
 mod cget;
 mod comment;
 mod post;
 mod user;
-use cget::{get_connection_posts, get_connection_users};
+mod timeconvertor;
+use timeconvertor::to_bson_date_time;
 use comment::Comment;
 use post::Post;
 use rocket::futures::StreamExt;
 use user::User;
+use chrono::prelude::*;
 async fn user_create(collection: &Collection<User>, user: User) -> Result<InsertOneResult, Error> {
     let filter = doc! {
         "name": &user.name
@@ -63,7 +65,7 @@ async fn user_change(collection: &Collection<User>, user: User) -> Result<Update
         Err(e) => Err(e),
     }
 }
-
+//удаляя пользователя, сначала удаляем его посты чтобы их никто не мог забрать.
 async fn user_delete(collection: &Collection<User>, user: User) -> Result<DeleteResult, Error> {
     let filter_post = doc! {
         "author": &user.name,
@@ -87,8 +89,11 @@ async fn user_delete(collection: &Collection<User>, user: User) -> Result<Delete
 }
 
 async fn post_create(collection: &Collection<Post>, post: Post) -> Result<InsertOneResult, Error> {
-    let mut post = post.to_owned();
-    post.id = Some(ObjectId::new());
+    let mut post = post;
+    if post.id.is_none() {
+        post.id = Some(ObjectId::new());
+    }
+    post.date = to_bson_date_time(Utc::now().timestamp_millis()).await?;
     match collection.insert_one(post, None).await {
         Ok(result) => Ok(result),
         Err(e) => Err(e),
@@ -116,11 +121,11 @@ async fn post_edit(collection: &Collection<Post>, post: Post) -> Result<UpdateRe
 
 async fn comment_to(
     collection: &Collection<Post>,
-    postID: ObjectId,
+    post_id: ObjectId,
     comment: Comment,
 ) -> Result<UpdateResult, Error> {
     let filter = doc! {
-        "id": postID,
+        "id": post_id,
     };
     let update = doc! {
         "$push": {
@@ -132,10 +137,10 @@ async fn comment_to(
 
 async fn post_delete(
     collection: &Collection<Post>,
-    postID: ObjectId,
+    post_id: ObjectId,
 ) -> Result<DeleteResult, Error> {
     let filter = doc! {
-        "_id": postID,
+        "_id": post_id,
     };
     Ok(collection
         .delete_one(filter, DeleteOptions::builder().build())
@@ -165,9 +170,9 @@ async fn post_getall(
     Ok(posts)
 }
 //for single post
-async fn post_get(collection: &Collection<Post>, postID: ObjectId) -> Result<Option<Post>, Error> {
+async fn post_get(collection: &Collection<Post>, post_id: ObjectId) -> Result<Option<Post>, Error> {
     let filter = doc! {
-        "id": postID,
+        "id": post_id,
     };
     match collection.find_one(filter, None).await {
         Ok(result) => Ok(result),

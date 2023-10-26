@@ -1,17 +1,19 @@
-use mongodb::bson::oid::ObjectId;
+use mongodb::bson::{oid::ObjectId, DateTime};
 use serde::{Deserialize, Serialize};
+use super::comment::Comment;
 
-#[derive(Debug, Serialize, Clone, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Post {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     pub id: Option<ObjectId>,
-    pub author: String,
-    pub label: String,
+    pub author: Vec<String>,
+    pub date: DateTime,
     pub underlabel: String,
+    pub label: String,
     pub text: String,
     pub footer: String,
     pub tags: Vec<String>,
-    pub comments: Vec<String>,
+    pub comments: Vec<Comment>,
 }
 
 // impl Post {
@@ -36,3 +38,5 @@ pub struct Post {
 //         }
 //     }
 // }
+
+
