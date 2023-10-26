@@ -1,4 +1,3 @@
-use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct User {
@@ -9,22 +8,4 @@ pub struct User {
     pub password: String,
     pub email: String,
     // posts: Vec<Option<ObjectId>>,
-}
-
-impl User {
-    pub fn new(
-        //id: Option<ObjectId>,
-        name: String,
-        password: String,
-        email: String,
-        // posts: Vec<Option<ObjectId>>,
-    ) -> Self {
-        Self {
-            //id,
-            name,
-            password,
-            email,
-            // posts,
-        }
-    }
 }

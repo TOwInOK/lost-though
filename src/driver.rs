@@ -1,36 +1,19 @@
+use mongodb::{
+    bson::{doc, oid::ObjectId, to_document},
+    error::Error,
+    options::{ClientOptions, DeleteOptions, UpdateOptions},
+    results::{DeleteResult, InsertOneResult, UpdateResult},
+    Client, Collection, Cursor,
+};
+mod cget;
+mod comment;
 mod post;
 mod user;
-
-use mongodb::{
-    bson::{doc, oid::ObjectId},
-    error::Error,
-    options::ClientOptions,
-    results::{DeleteResult, InsertOneResult, UpdateResult},
-    Client, Collection,
-};
+use cget::{get_connection_posts, get_connection_users};
+use comment::Comment;
 use post::Post;
+use rocket::futures::StreamExt;
 use user::User;
-
-const ADDRESS: &str = "mongodb://root:example@192.168.0.15:27017";
-
-async fn get_connection_users() -> Collection<User> {
-    let client_options = ClientOptions::parse_async(ADDRESS)
-        .await
-        .expect("Ошибка подключение к базе данных");
-    let client = Client::with_options(client_options).expect("Ошибка создание клиента -> User");
-    let database = client.database("Main");
-    return database.collection::<User>("users");
-}
-
-async fn get_connection_posts() -> Collection<Post> {
-    let client_options = ClientOptions::parse_async(ADDRESS)
-        .await
-        .expect("Ошибка подключение к базе данных");
-    let client = Client::with_options(client_options).expect("Ошибка создание клиента -> Post");
-    let database = client.database("Main");
-    return database.collection::<Post>("posts");
-}
-
 async fn user_create(collection: &Collection<User>, user: User) -> Result<InsertOneResult, Error> {
     let filter = doc! {
         "name": &user.name
@@ -82,11 +65,25 @@ async fn user_change(collection: &Collection<User>, user: User) -> Result<Update
 }
 
 async fn user_delete(collection: &Collection<User>, user: User) -> Result<DeleteResult, Error> {
-    let filter = doc! {
-        "name": user.name,
+    let filter_post = doc! {
+        "author": &user.name,
+    };
+
+    // Удаляем посты пользователя
+    collection
+        .delete_many(filter_post, DeleteOptions::builder().build())
+        .await?;
+
+    let filter_user = doc! {
+        "name": &user.name,
         "email": user.email,
     };
-    Ok(collection.delete_one(filter, None).await?)
+
+    // Удаляем пользователя
+    let result = collection
+        .delete_one(filter_user, DeleteOptions::builder().build())
+        .await?;
+    Ok(result)
 }
 
 async fn post_create(collection: &Collection<Post>, post: Post) -> Result<InsertOneResult, Error> {
@@ -97,19 +94,83 @@ async fn post_create(collection: &Collection<Post>, post: Post) -> Result<Insert
         Err(e) => Err(e),
     }
 }
+//раздели комментарии
+async fn post_edit(collection: &Collection<Post>, post: Post) -> Result<UpdateResult, Error> {
+    let filter = doc! {
+        "_id": post.id
+    };
+    let update = doc! {
+        "$set": {
+            "label": &post.label,
+            "underlabel": &post.underlabel,
+            "text": &post.text,
+            "footer": &post.footer,
+            "tags": &post.tags,
+        }
+    };
 
-async fn post_edit() {
-    todo!()
+    collection
+        .update_one(filter, update, UpdateOptions::builder().build())
+        .await
 }
 
-async fn post_delete() {
-    todo!()
+async fn comment_to(
+    collection: &Collection<Post>,
+    postID: ObjectId,
+    comment: Comment,
+) -> Result<UpdateResult, Error> {
+    let filter = doc! {
+        "id": postID,
+    };
+    let update = doc! {
+        "$push": {
+            "comments": to_document(&comment)?
+        }
+    };
+    Ok(collection.update_one(filter, update, None).await?)
 }
 
-async fn post_getall() {
-    todo!()
+async fn post_delete(
+    collection: &Collection<Post>,
+    postID: ObjectId,
+) -> Result<DeleteResult, Error> {
+    let filter = doc! {
+        "_id": postID,
+    };
+    Ok(collection
+        .delete_one(filter, DeleteOptions::builder().build())
+        .await?)
 }
-
-async fn post_get() {
-    todo!()
+//get all user's posts
+async fn post_getall(
+    collection: &Collection<Post>,
+    author: String,
+) -> Result<Vec<Option<Post>>, Error> {
+    let filter = doc! {
+      "author": author
+    };
+    let mut cursor = collection.find(filter, None).await?;
+    // Используем `StreamExt` для асинхронного перебора результатов
+    let mut posts = Vec::new();
+    while let Some(post) = cursor.next().await {
+        match post {
+            Ok(post) => {
+                posts.push(Some(post));
+            }
+            Err(e) => {
+                return Err(e);
+            }
+        }
+    }
+    Ok(posts)
+}
+//for single post
+async fn post_get(collection: &Collection<Post>, postID: ObjectId) -> Result<Option<Post>, Error> {
+    let filter = doc! {
+        "id": postID,
+    };
+    match collection.find_one(filter, None).await {
+        Ok(result) => Ok(result),
+        Err(e) => Err(e),
+    }
 }

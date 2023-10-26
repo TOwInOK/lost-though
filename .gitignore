@@ -1,2 +1,4 @@
 /target
 /ref
+/Cargo.lock
+/.DS_Store
