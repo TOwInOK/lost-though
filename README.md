@@ -1,2 +1,2 @@
 # lost-though
-Social site like vk
+Social site like tg
