@@ -13,9 +13,13 @@ mod timeconvertor;
 use timeconvertor::to_bson_date_time;
 use comment::Comment;
 use post::Post;
-use rocket::futures::StreamExt;
+use futures::StreamExt;
 use user::User;
 use chrono::prelude::*;
+//Реализовать oAuth2s
+//Реализовать GraphQL
+//Реализовать WebSocket
+
 async fn user_create(collection: &Collection<User>, user: User) -> Result<InsertOneResult, Error> {
     let filter = doc! {
         "name": &user.name
