@@ -10,7 +10,6 @@ mod comment;
 mod post;
 mod user;
 mod timeconvertor;
-use timeconvertor::to_bson_date_time;
 use comment::Comment;
 use post::Post;
 use futures::StreamExt;
@@ -97,7 +96,9 @@ async fn post_create(collection: &Collection<Post>, post: Post) -> Result<Insert
     if post.id.is_none() {
         post.id = Some(ObjectId::new());
     }
-    post.date = to_bson_date_time(Utc::now().timestamp_millis()).await?;
+    //Зачем нам конвертировать из TimesTamp в Utc и на оборот если можно хранить u64 или i64?
+    //post.date = to_bson_date_time(Utc::now().timestamp_millis()).await?;
+    post.date = Utc::now().timestamp_millis() as u64;
     match collection.insert_one(post, None).await {
         Ok(result) => Ok(result),
         Err(e) => Err(e),
