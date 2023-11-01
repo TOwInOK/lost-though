@@ -1,6 +1,6 @@
+use super::comment::Comment;
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
-use super::comment::Comment;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Post {
@@ -15,28 +15,3 @@ pub struct Post {
     pub tags: Vec<String>,
     pub comments: Vec<Comment>,
 }
-
-// impl Post {
-//     pub fn new(
-//         id: Option<ObjectId>,
-//         author: String,
-//         label: String,
-//         underlabel: String,
-//         text: String,
-//         footer: String,
-//         tags: String,
-//     ) -> Self {
-//         let tags = tags.split(',').map(|s| s.to_string()).collect();
-//         Self {
-//             id,
-//             author,
-//             label,
-//             underlabel,
-//             text,
-//             footer,
-//             tags,
-//         }
-//     }
-// }
-
-

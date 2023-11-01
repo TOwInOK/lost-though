@@ -5,21 +5,23 @@ use mongodb::{
     results::{DeleteResult, InsertOneResult, UpdateResult},
     Collection,
 };
-mod cget;
-mod comment;
-mod post;
-mod user;
-mod timeconvertor;
-use comment::Comment;
-use post::Post;
-use futures::StreamExt;
-use user::User;
+pub mod cget;
+pub mod comment;
+pub mod post;
+pub mod user;
 use chrono::prelude::*;
+use comment::Comment;
+use futures::StreamExt;
+use post::Post;
+use user::User;
 //Реализовать oAuth2s
 //Реализовать GraphQL
 //Реализовать WebSocket
 
-async fn user_create(collection: &Collection<User>, user: User) -> Result<InsertOneResult, Error> {
+pub async fn user_create(
+    collection: &Collection<User>,
+    user: User,
+) -> Result<InsertOneResult, Error> {
     let filter = doc! {
         "name": &user.name
     };
@@ -38,22 +40,18 @@ async fn user_create(collection: &Collection<User>, user: User) -> Result<Insert
     }
 }
 
-pub async fn user_get(name: String, collection: &Collection<User>) -> Result<User, Error> {
+pub async fn user_get(collection: &Collection<User>, name: String) -> Result<Option<User>, Error> {
     let filter = doc! {
         "name": name
     };
-    if let Some(user) = collection.find_one(filter, None).await? {
-        Ok(user)
-    } else {
-        Err(Error::from(std::io::Error::new(
-            std::io::ErrorKind::NotFound,
-            "Пользователь не найден",
-        )))
+    match collection.find_one(filter, None).await {
+        Ok(result) => Ok(result),
+        Err(e) => Err(e),
     }
 }
 // we can't change login :)
 // get some user and change all atribute, but can't change login cause we need the stable name
-async fn user_change(collection: &Collection<User>, user: User) -> Result<UpdateResult, Error> {
+pub async fn user_change(collection: &Collection<User>, user: User) -> Result<UpdateResult, Error> {
     let filter = doc! {
         "name": user.name
     };
@@ -69,15 +67,17 @@ async fn user_change(collection: &Collection<User>, user: User) -> Result<Update
     }
 }
 //удаляя пользователя, сначала удаляем его посты чтобы их никто не мог забрать.
-async fn user_delete(collection: &Collection<User>, user: User) -> Result<DeleteResult, Error> {
+pub async fn user_delete(collection_user: &Collection<User>, collection_post: &Collection<Post>, user: User) -> Result<DeleteResult, Error> {
     let filter_post = doc! {
-        "author": &user.name,
+        "author": {
+            "$in": [&user.name]
+        }
     };
 
     // Удаляем посты пользователя
-    collection
-        .delete_many(filter_post, DeleteOptions::builder().build())
-        .await?;
+    collection_post
+    .delete_many(filter_post, DeleteOptions::builder().build())
+    .await?;
 
     let filter_user = doc! {
         "name": &user.name,
@@ -85,13 +85,16 @@ async fn user_delete(collection: &Collection<User>, user: User) -> Result<Delete
     };
 
     // Удаляем пользователя
-    let result = collection
+    let result = collection_user
         .delete_one(filter_user, DeleteOptions::builder().build())
         .await?;
     Ok(result)
 }
 
-async fn post_create(collection: &Collection<Post>, post: Post) -> Result<InsertOneResult, Error> {
+pub async fn post_create(
+    collection: &Collection<Post>,
+    post: Post,
+) -> Result<InsertOneResult, Error> {
     let mut post = post;
     if post.id.is_none() {
         post.id = Some(ObjectId::new());
@@ -105,7 +108,7 @@ async fn post_create(collection: &Collection<Post>, post: Post) -> Result<Insert
     }
 }
 //раздели комментарии
-async fn post_edit(collection: &Collection<Post>, post: Post) -> Result<UpdateResult, Error> {
+pub async fn post_edit(collection: &Collection<Post>, post: Post) -> Result<UpdateResult, Error> {
     let filter = doc! {
         "_id": post.id
     };
@@ -124,13 +127,13 @@ async fn post_edit(collection: &Collection<Post>, post: Post) -> Result<UpdateRe
         .await
 }
 
-async fn comment_to(
+pub async fn comment_to(
     collection: &Collection<Post>,
     post_id: ObjectId,
     comment: Comment,
 ) -> Result<UpdateResult, Error> {
     let filter = doc! {
-        "id": post_id,
+        "_id": post_id,
     };
     let update = doc! {
         "$push": {
@@ -140,7 +143,7 @@ async fn comment_to(
     Ok(collection.update_one(filter, update, None).await?)
 }
 
-async fn post_delete(
+pub async fn post_delete(
     collection: &Collection<Post>,
     post_id: ObjectId,
 ) -> Result<DeleteResult, Error> {
@@ -152,7 +155,7 @@ async fn post_delete(
         .await?)
 }
 //get all user's posts
-async fn post_getall(
+pub async fn post_getall(
     collection: &Collection<Post>,
     author: String,
 ) -> Result<Vec<Option<Post>>, Error> {
@@ -175,12 +178,16 @@ async fn post_getall(
     Ok(posts)
 }
 //for single post
-async fn post_get(collection: &Collection<Post>, post_id: ObjectId) -> Result<Option<Post>, Error> {
+pub async fn post_get(
+    collection: &Collection<Post>,
+    post_id: ObjectId,
+) -> Result<Option<Post>, Error> {
     let filter = doc! {
-        "id": post_id,
+        "_id": post_id,
     };
     match collection.find_one(filter, None).await {
         Ok(result) => Ok(result),
         Err(e) => Err(e),
     }
 }
+

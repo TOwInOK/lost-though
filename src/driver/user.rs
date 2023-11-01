@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct User {
     //why we need this for user???
     //#[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
