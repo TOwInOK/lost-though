@@ -1,12 +1,3 @@
-//register
-//create - требуется логин и пароль для создания. (можем снимать токены)
-//user - информация о пользователе. Если же пароль не совпадает или же его нет отправляем просто логин
-//post - информация о конкретном посте
-//postall - все посты пользователя
-//indexpost - все посты в базе данных
-//delete - удалить пост
-//edit - редактировать пост
-
 use actix_web::{delete, get, post, web, HttpResponse, Responder};
 use back::autentifications::auth::Auth;
 use back::mongolinks::cget::{get_connection_posts, get_connection_users};
