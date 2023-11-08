@@ -7,3 +7,4 @@
     - add .env crate
     - add more pretty tls client
     - add crate for logging
+    - redis
