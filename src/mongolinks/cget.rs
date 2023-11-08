@@ -1,5 +1,6 @@
-use crate::driver::Post;
-use crate::driver::User;
+use crate::posts::post::Post;
+use crate::user::user::User;
+
 use mongodb::{options::ClientOptions, Client, Collection};
 #[allow(unused)]
 const ADDRESS: &str = "mongodb://root:example@192.168.0.15:27017";

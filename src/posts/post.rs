@@ -1,4 +1,4 @@
-use super::comment::Comment;
+use crate::comments::comment::Comment;
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 
