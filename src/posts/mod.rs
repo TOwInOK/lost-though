@@ -2,14 +2,10 @@ pub mod post;
 
 use chrono::Utc;
 use futures::StreamExt;
-use mongodb::bson::doc;
-use mongodb::bson::oid::ObjectId;
-use mongodb::error::Error;
-use mongodb::options::{DeleteOptions, UpdateOptions};
-use mongodb::results::{DeleteResult, InsertOneResult, UpdateResult};
-use mongodb::Collection;
+use mongodb::{bson::{doc, oid::ObjectId}, error::Error, options::{DeleteOptions, UpdateOptions}, results::{DeleteResult, InsertOneResult, UpdateResult}, Collection};
 use post::Post;
 
+//Создание поста
 pub async fn post_create(
     collection: &Collection<Post>,
     post: Post,
@@ -18,7 +14,7 @@ pub async fn post_create(
     if post.id.is_none() {
         post.id = Some(ObjectId::new());
     }
-    //Зачем нам конвертировать из TimesTamp в Utc и на оборот если можно хранить u64 или i64?
+    //Зачем нам конвертировать из TimesTamp в Utc и на оборот если можно хранить i64?
     //post.date = to_bson_date_time(Utc::now().timestamp_millis()).await?;
     post.date = Utc::now().timestamp_millis() as u64;
     match collection.insert_one(post, None).await {
@@ -26,7 +22,7 @@ pub async fn post_create(
         Err(e) => Err(e),
     }
 }
-//раздели комментарии
+//Редактирование поста
 pub async fn post_edit(
     collection: &Collection<Post>,
     post: Post,
@@ -51,6 +47,7 @@ pub async fn post_edit(
         .await
 }
 
+//Удаление поста
 pub async fn post_delete(
     collection: &Collection<Post>,
     post_id: String,
@@ -63,7 +60,7 @@ pub async fn post_delete(
         .await
 }
 
-//get all user's posts
+//Получаем все посты пользователя по имени. Если имя будет в посте в Vec(author) то оно будет возвращено
 pub async fn post_getall(
     collection: &Collection<Post>,
     author: String,
@@ -86,7 +83,8 @@ pub async fn post_getall(
     }
     Ok(posts)
 }
-//for single post
+//Получение информации о посте по его id.
+//Id получаем при фетче постов пользователя либо из первых постов главной страницы
 pub async fn post_get(
     collection: &Collection<Post>,
     post_id: String,

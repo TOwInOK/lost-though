@@ -1,12 +1,3 @@
-//register
-//create - требуется логин и пароль для создания. (можем снимать токены)
-//user - информация о пользователе. Если же пароль не совпадает или же его нет отправляем просто логин
-//post - информация о конкретном посте
-//postall - все посты пользователя
-//indexpost - все посты в базе данных
-//delete - удалить пост
-//edit - редактировать пост
-
 use actix_web::{delete, get, post, web, HttpResponse, Responder};
 use back::autentifications::auth::Auth;
 use back::mongolinks::cget::{get_connection_posts, get_connection_users};
@@ -15,11 +6,12 @@ use back::posts::*;
 use back::user::user::{User, UserMin};
 use back::user::*;
 
+//а почему нет
 #[get("/")]
 pub async fn hello() -> impl Responder {
     HttpResponse::Ok().body("Hello world!")
 }
-
+//создание пользователя
 #[post("/create")]
 pub async fn create_user(u: web::Json<User>) -> HttpResponse {
     let collection = get_connection_users().await;
@@ -45,7 +37,7 @@ pub async fn user(name: web::Path<String>) -> HttpResponse {
         Err(e) => HttpResponse::BadRequest().body(e.to_string()),
     }
 }
-//получение инфы о пользователе - email
+//получение инфы о пользователе - вся котороя может быть в User
 //нужен пароль
 #[get("/{name}/settings")]
 pub async fn get_user_settings(name: web::Path<String>, u: web::Json<User>) -> HttpResponse {
@@ -62,7 +54,7 @@ pub async fn get_user_settings(name: web::Path<String>, u: web::Json<User>) -> H
         Err(e) => HttpResponse::BadRequest().body(e.to_string()),
     }
 }
-
+//Меняем пароль отправляя пользователя
 //нужен пароль
 #[post("/{name}/changepass")]
 pub async fn user_changer(name: web::Data<String>, u: web::Json<User>) -> HttpResponse {
@@ -95,7 +87,11 @@ pub async fn postall(name: web::Path<String>) -> HttpResponse {
         Err(e) => HttpResponse::BadRequest().body(e.to_string()),
     }
 }
-
+//удаляем пользоателя
+//Конечно забавно что пользователь может удалять себя
+//Но даже если структура по имени правильная, то пользователя не удалишь.
+//Из минусов удаляться все посты.
+//так что менять с проверкой.
 #[delete("/{name}/delete")]
 pub async fn delete_user(u: web::Json<User>) -> HttpResponse {
     let collection = get_connection_users().await;
@@ -105,7 +101,7 @@ pub async fn delete_user(u: web::Json<User>) -> HttpResponse {
         Err(e) => HttpResponse::BadRequest().body(e.to_string()),
     }
 }
-
+//удаляем пост
 #[delete("/{post}/delete")]
 pub async fn post_deleter(post_id: web::Path<String>, auth: web::Json<Auth>) -> HttpResponse {
     let collection = get_connection_posts().await;
@@ -128,6 +124,8 @@ pub async fn post(post_id: web::Path<String>) -> HttpResponse {
         Err(e) => HttpResponse::BadRequest().body(e.to_string()),
     }
 }
+//Редактируем пост отправляя запрос.
+//Заменть на сегментарное редактирование.
 #[post("/{post}/edit")]
 pub async fn post_editor(local_post: web::Json<Post>, auth: web::Json<Auth>) -> HttpResponse {
     let collection = get_connection_posts().await;

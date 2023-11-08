@@ -12,6 +12,7 @@ use mongodb::options::UpdateOptions;
 use mongodb::results::UpdateResult;
 use mongodb::Collection;
 
+//Функции для взаимодействия с role. Пока никак не используются.
 pub async fn change_pid(
     collection: &Collection<User>,
     name: String,
