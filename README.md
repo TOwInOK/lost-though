@@ -8,3 +8,5 @@
     - add more pretty tls client
     - add crate for logging
     - redis
+    - Oauth2 & JWT
+    - replace RestApi to WebSocket
