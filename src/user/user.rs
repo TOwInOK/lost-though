@@ -11,6 +11,12 @@ pub struct User {
     #[serde(default = "default_role")]
     pub role: Role,
 }
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct UserMin {
+    pub name: String,
+    #[serde(default = "default_role")]
+    pub role: Role,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Role {

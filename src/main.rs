@@ -1,19 +1,33 @@
-use actix_web::{get, App, HttpResponse, HttpServer, Responder};
-
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
-}
-
+mod app;
+use app::*;
+use actix_web::{web,App,HttpServer, middleware::NormalizePath};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
-            .service(hello)
-           // .service(web::resource("/token").route(web::post().to(create_token)))
+        .wrap(NormalizePath::default())
+        .service(hello)
+        .service(
+            web::scope("/user")
+                .service(user)
+                .service(postall)
+                .service(get_user_settings)
+                .service(user_changer)
+                .service(delete_user)
+                .service(create_user)
+            )
+        .service(
+            web::scope("/post")
+            .service(post)
+            .service(post_editor)
+            .service(post_deleter)
+            .service(post_editor)
+        )
     })
     .bind(("127.0.0.1", 8080))?
     .run()
     .await
 }
+
+

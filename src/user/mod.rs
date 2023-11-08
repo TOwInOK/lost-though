@@ -1,4 +1,4 @@
-pub(crate) mod user;
+pub mod user;
 use user::User;
 use mongodb::Collection;
 use mongodb::results::InsertOneResult;

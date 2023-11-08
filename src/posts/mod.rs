@@ -27,9 +27,10 @@ pub async fn post_create(
     }
 }
 //раздели комментарии
-pub async fn post_edit(collection: &Collection<Post>, post: Post) -> Result<UpdateResult, Error> {
+pub async fn post_edit(collection: &Collection<Post>, post: Post, author: String) -> Result<UpdateResult, Error> {
     let filter = doc! {
-        "_id": post.id
+        "_id": post.id,
+        "author": author
     };
     let update = doc! {
         "$set": {
@@ -48,7 +49,7 @@ pub async fn post_edit(collection: &Collection<Post>, post: Post) -> Result<Upda
 
 pub async fn post_delete(
     collection: &Collection<Post>,
-    post_id: ObjectId,
+    post_id: String,
 ) -> Result<DeleteResult, Error> {
     let filter = doc! {
         "_id": post_id,
@@ -85,7 +86,7 @@ pub async fn post_getall(
 //for single post
 pub async fn post_get(
     collection: &Collection<Post>,
-    post_id: ObjectId,
+    post_id: String,
 ) -> Result<Option<Post>, Error> {
     let filter = doc! {
         "_id": post_id,

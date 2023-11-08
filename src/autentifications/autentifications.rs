@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
-
 use crate::mongolinks::cget::get_connection_users;
 use crate::user::user_get;
+use crate::user::user::User;
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Auth {
-    name: String,
+    pub name: String,
     password: String,
 }
 //нет времени на реализацию jwt или любой человеческой реализации.
@@ -21,6 +21,17 @@ impl Auth {
             Ok(Some(user)) => user.password == self.password,
             Ok(None) => false,
             Err(_) => false,
+        }
+    }
+}
+
+impl User {
+    pub fn validate(&self, another: &User) -> bool {
+        if self.password == another.password {
+            true
+        }
+        else {
+            false
         }
     }
 }
