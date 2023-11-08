@@ -11,7 +11,8 @@ pub async fn get_connection_users() -> Collection<User> {
         .expect("Ошибка подключение к базе данных");
     let client = Client::with_options(client_options).expect("Ошибка создание клиента -> User");
     let database = client.database("Main");
-    return database.collection::<User>("users");
+
+    database.collection::<User>("users")
 }
 #[allow(unused)]
 pub async fn get_connection_posts() -> Collection<Post> {
@@ -20,6 +21,6 @@ pub async fn get_connection_posts() -> Collection<Post> {
         .expect("Ошибка подключение к базе данных");
     let client = Client::with_options(client_options).expect("Ошибка создание клиента -> Post");
     let database = client.database("Main");
-    return database.collection::<Post>("posts");
-}
 
+    database.collection::<Post>("posts")
+}

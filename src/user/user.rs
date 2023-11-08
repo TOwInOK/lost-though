@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use mongodb::bson::Bson;
+use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct User {
     //why we need this for user???
@@ -30,7 +30,7 @@ fn default_role() -> Role {
     Role::Default // Установить роль по умолчанию на "User"
 }
 impl Role {
-    pub fn from (s: String) -> Self {
+    pub fn from(s: String) -> Self {
         match s.as_str() {
             "Admin" => Role::Admin,
             "Paid" => Role::Paid,
@@ -45,6 +45,4 @@ impl Role {
             Role::Default => Bson::String("Default".to_string()),
         }
     }
-    
 }
-

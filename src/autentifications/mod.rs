@@ -1,1 +1,1 @@
-pub mod autentifications;
+pub mod auth;

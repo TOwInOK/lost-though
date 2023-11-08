@@ -1,14 +1,14 @@
 pub mod post;
 
-use post::Post;
-use futures::StreamExt;
-use mongodb::Collection;
-use mongodb::bson::doc;
-use mongodb::error::Error;
-use mongodb::bson::oid::ObjectId;
-use mongodb::results::{UpdateResult, InsertOneResult, DeleteResult};
-use mongodb::options::{UpdateOptions, DeleteOptions};
 use chrono::Utc;
+use futures::StreamExt;
+use mongodb::bson::doc;
+use mongodb::bson::oid::ObjectId;
+use mongodb::error::Error;
+use mongodb::options::{DeleteOptions, UpdateOptions};
+use mongodb::results::{DeleteResult, InsertOneResult, UpdateResult};
+use mongodb::Collection;
+use post::Post;
 
 pub async fn post_create(
     collection: &Collection<Post>,
@@ -27,7 +27,11 @@ pub async fn post_create(
     }
 }
 //раздели комментарии
-pub async fn post_edit(collection: &Collection<Post>, post: Post, author: String) -> Result<UpdateResult, Error> {
+pub async fn post_edit(
+    collection: &Collection<Post>,
+    post: Post,
+    author: String,
+) -> Result<UpdateResult, Error> {
     let filter = doc! {
         "_id": post.id,
         "author": author
@@ -54,11 +58,10 @@ pub async fn post_delete(
     let filter = doc! {
         "_id": post_id,
     };
-    Ok(collection
+    collection
         .delete_one(filter, DeleteOptions::builder().build())
-        .await?)
+        .await
 }
-
 
 //get all user's posts
 pub async fn post_getall(

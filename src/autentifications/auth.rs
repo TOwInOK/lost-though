@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
 use crate::mongolinks::cget::get_connection_users;
-use crate::user::user_get;
 use crate::user::user::User;
+use crate::user::user_get;
+use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Auth {
     pub name: String,
@@ -10,10 +10,7 @@ pub struct Auth {
 //нет времени на реализацию jwt или любой человеческой реализации.
 impl Auth {
     pub fn new(name: String, password: String) -> Self {
-        Self {
-            name,
-            password,
-        }
+        Self { name, password }
     }
     pub async fn validate(&self) -> bool {
         let collection = get_connection_users().await;
@@ -27,11 +24,6 @@ impl Auth {
 
 impl User {
     pub fn validate(&self, another: &User) -> bool {
-        if self.password == another.password {
-            true
-        }
-        else {
-            false
-        }
+        self.password == another.password
     }
 }

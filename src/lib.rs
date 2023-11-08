@@ -4,12 +4,12 @@ pub mod mongolinks;
 pub mod posts;
 pub mod user;
 
-use crate::user::user::User;
 use crate::user::user::Role;
-use mongodb::results::UpdateResult;
+use crate::user::user::User;
 use mongodb::bson::doc;
 use mongodb::error::Error;
 use mongodb::options::UpdateOptions;
+use mongodb::results::UpdateResult;
 use mongodb::Collection;
 
 pub async fn change_pid(
@@ -29,17 +29,14 @@ pub async fn change_pid(
     };
     if access_key == PID_KEY {
         collection
-        .update_one(filter, update, UpdateOptions::builder().build())
-        .await
-    }else {
+            .update_one(filter, update, UpdateOptions::builder().build())
+            .await
+    } else {
         panic!("Invalid Key")
     }
 }
 
-pub async fn be_paid(
-    collection: &Collection<User>,
-    name: String,
-) -> Result<UpdateResult, Error> {
+pub async fn be_paid(collection: &Collection<User>, name: String) -> Result<UpdateResult, Error> {
     let filter = doc! {
         "name": name
     };
@@ -49,14 +46,11 @@ pub async fn be_paid(
         }
     };
     collection
-    .update_one(filter, update, UpdateOptions::builder().build())
-    .await
+        .update_one(filter, update, UpdateOptions::builder().build())
+        .await
 }
 
-pub async fn un_paid(
-    collection: &Collection<User>,
-    name: String,
-) -> Result<UpdateResult, Error> {
+pub async fn un_paid(collection: &Collection<User>, name: String) -> Result<UpdateResult, Error> {
     let filter = doc! {
         "name": name
     };
@@ -66,20 +60,17 @@ pub async fn un_paid(
         }
     };
     collection
-    .update_one(filter, update, UpdateOptions::builder().build())
-    .await
+        .update_one(filter, update, UpdateOptions::builder().build())
+        .await
 }
 
-pub async fn is_admin(
-    collection: &Collection<User>,
-    name: String,
-) -> bool {
+pub async fn is_admin(collection: &Collection<User>, name: String) -> bool {
     let filter = doc! {
         "name": name,
         "role": Role::convert_role_to_bson(Role::Admin),
     };
     match collection.find_one(filter, None).await {
-        Ok(result) => true,
-        Err(e) => false,
+        Ok(_result) => true,
+        Err(_e) => false,
     }
 }

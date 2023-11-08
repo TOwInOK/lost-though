@@ -1,12 +1,12 @@
 pub mod comment;
-use comment::Comment;
-use mongodb::Collection;
-use mongodb::bson::doc;
-use mongodb::error::Error;
-use mongodb::bson::oid::ObjectId;
-use mongodb::results::UpdateResult;
-use mongodb::bson::to_document;
 use crate::posts::post::Post;
+use comment::Comment;
+use mongodb::bson::doc;
+use mongodb::bson::oid::ObjectId;
+use mongodb::bson::to_document;
+use mongodb::error::Error;
+use mongodb::results::UpdateResult;
+use mongodb::Collection;
 
 pub async fn comment_to(
     collection: &Collection<Post>,
@@ -21,5 +21,8 @@ pub async fn comment_to(
             "comments": to_document(&comment)?
         }
     };
-    Ok(collection.update_one(filter, update, None).await?)
+    match collection.update_one(filter, update, None).await {
+        Ok(result) => Ok(result),
+        Err(e) => Err(e),
+    }
 }

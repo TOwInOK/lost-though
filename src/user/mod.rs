@@ -1,13 +1,11 @@
 pub mod user;
-use user::User;
-use mongodb::Collection;
-use mongodb::results::InsertOneResult;
-use mongodb::results::UpdateResult;
-use mongodb::results::DeleteResult;
-use mongodb::error::Error;
-use mongodb::bson::doc;
-use mongodb::options::DeleteOptions;
 use crate::posts::post::Post;
+use mongodb::bson::doc;
+use mongodb::error::Error;
+use mongodb::options::DeleteOptions;
+use mongodb::results::{DeleteResult, InsertOneResult, UpdateResult};
+use mongodb::Collection;
+use user::User;
 
 pub async fn user_create(
     collection: &Collection<User>,
@@ -17,12 +15,10 @@ pub async fn user_create(
         "name": &user.name
     };
     match collection.find_one(filter, None).await {
-        Ok(Some(_)) => {
-            return Err(Error::from(std::io::Error::new(
-                std::io::ErrorKind::AlreadyExists,
-                "Пользователь уже существует в базе данных.",
-            )));
-        }
+        Ok(Some(_)) => Err(Error::from(std::io::Error::new(
+            std::io::ErrorKind::AlreadyExists,
+            "Пользователь уже существует в базе данных.",
+        ))),
         Ok(None) => match collection.insert_one(user, None).await {
             Ok(result) => Ok(result),
             Err(e) => Err(e),
@@ -57,8 +53,11 @@ pub async fn user_change(collection: &Collection<User>, user: User) -> Result<Up
     }
 }
 
-
-pub async fn user_delete(collection_user: &Collection<User>, collection_post: &Collection<Post>, user: User) -> Result<DeleteResult, Error> {
+pub async fn user_delete(
+    collection_user: &Collection<User>,
+    collection_post: &Collection<Post>,
+    user: User,
+) -> Result<DeleteResult, Error> {
     let filter_post = doc! {
         "author": {
             "$in": [&user.name]
@@ -67,8 +66,8 @@ pub async fn user_delete(collection_user: &Collection<User>, collection_post: &C
 
     // Удаляем посты пользователя
     collection_post
-    .delete_many(filter_post, DeleteOptions::builder().build())
-    .await?;
+        .delete_many(filter_post, DeleteOptions::builder().build())
+        .await?;
 
     let filter_user = doc! {
         "name": &user.name,
