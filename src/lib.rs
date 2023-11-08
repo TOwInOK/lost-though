@@ -1,4 +1,4 @@
-pub mod bandwich;
+pub mod autentifications;
 pub mod comments;
 pub mod mongolinks;
 pub mod posts;

@@ -1,7 +1,7 @@
 use crate::posts::post::Post;
 use crate::user::user::User;
-
 use mongodb::{options::ClientOptions, Client, Collection};
+
 #[allow(unused)]
 const ADDRESS: &str = "mongodb://root:example@192.168.0.15:27017";
 #[allow(unused)]
@@ -22,3 +22,4 @@ pub async fn get_connection_posts() -> Collection<Post> {
     let database = client.database("Main");
     return database.collection::<Post>("posts");
 }
+
