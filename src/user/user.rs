@@ -11,6 +11,7 @@ pub struct User {
     #[serde(default = "default_role")]
     pub role: Role,
 }
+//Структура чтобы не горадить костыли вокруг разбора структуры User.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserMin {
     pub name: String,
@@ -18,6 +19,7 @@ pub struct UserMin {
     pub role: Role,
 }
 
+//Какие есть роли.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Role {
     Admin,
