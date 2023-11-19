@@ -4,6 +4,7 @@ use app::*;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    println!("Server starting on http://127.0.0.1:8080");
     HttpServer::new(|| {
         App::new()
             .wrap(NormalizePath::default())
@@ -22,7 +23,8 @@ async fn main() -> std::io::Result<()> {
                     .service(post)
                     .service(post_editor)
                     .service(post_deleter)
-                    .service(post_editor),
+                    .service(post_editor)
+                    .service(create),
             )
     })
     .bind(("127.0.0.1", 8080))?

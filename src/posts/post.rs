@@ -15,3 +15,13 @@ pub struct Post {
     pub tags: Vec<String>,
     pub comments: Vec<Comment>,
 }
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct PostCreate {
+    pub author: Vec<String>,
+    pub underlabel: String,
+    pub label: String,
+    pub text: String,
+    pub footer: String,
+    pub tags: Vec<String>,
+}

@@ -1,0 +1,49 @@
+POST http://127.0.0.1:8080/user/create HTTP/1.1
+Content-Type: application/json
+
+{
+    "name": "test21fd",
+    "password": "example2",
+    "email": "test@test.ru"
+}
+
+###
+GET http://127.0.0.1:8080/user/test21fd HTTP/1.1
+
+GET http://127.0.0.1:8080/user/test21fd/settings HTTP/1.1
+Content-Type: application/json
+
+{
+    "name": "test21fd",
+    "password": "example2",
+    "email": "test@test.ru"
+}
+
+GET http://127.0.0.1:8080/user/test21fd/settings HTTP/1.1
+Content-Type: application/json
+
+{
+    "name": "test21fd",
+    "password": "example2",
+    "email": "test@test.ru"
+}
+
+POST http://127.0.0.1:8080/post/create HTTP/1.1
+Content-Type: application/json
+
+{
+  "post": {
+    "author": ["test21fd"],
+    "underlabel": "Example Underlabel",
+    "label": "Example Label",
+    "text": "Example Text",
+    "footer": "Example Footer",
+    "tags": ["Tag1", "Tag2"]
+  },
+  "auth": {
+    "name": "test21fd",
+    "password": "example2"
+  }
+}
+
+GET http://127.0.0.1:8080/post/6557c5d77a925f835493442d HTTP/1.1
