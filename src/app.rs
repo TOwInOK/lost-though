@@ -122,10 +122,8 @@ pub async fn delete_user(u: web::Json<RequsetUserFullDelete>) -> HttpResponse {
 #[delete("/{post}/delete")]
 pub async fn post_deleter(p: web::Json<RequsetUserDelete>) -> HttpResponse {
     let collection = get_connection_posts().await;
-    let post_id = p.0.id;
-    let auth = p.0.auth;
-    if auth.validate().await {
-        match post_delete(&collection, post_id).await {
+    if p.0.auth.validate().await {
+        match post_delete(&collection, p.0.id).await {
             Ok(_v) => HttpResponse::Ok().body("Post deleted"),
             Err(e) => HttpResponse::BadRequest().body(e.to_string()),
         }
@@ -153,10 +151,8 @@ pub async fn post(post_id: web::Path<String>) -> HttpResponse {
 #[post("/{post}/edit")]
 pub async fn post_editor(p: web::Json<RequsetPost>) -> HttpResponse {
     let collection = get_connection_posts().await;
-    let local_post = p.0.post;
-    let auth = p.0.auth;
-    if auth.validate().await {
-        match post_edit(&collection, local_post, auth.name.to_string()).await {
+    if p.0.auth.validate().await {
+        match post_edit(&collection, p.0.post, p.0.auth.name.to_string()).await {
             Ok(_v) => HttpResponse::Ok().body("Post edited"),
             Err(e) => HttpResponse::BadRequest().body(e.to_string()),
         }
@@ -168,11 +164,8 @@ pub async fn post_editor(p: web::Json<RequsetPost>) -> HttpResponse {
 #[post("/create")]
 pub async fn create(p: web::Json<RequsetPostCreate>) -> HttpResponse {
     let collection = get_connection_posts().await;
-    let local_post = p.0.post;
-    let auth = p.0.auth;
-    println!("{:?}", &local_post);
-    if auth.validate().await {
-        match post_create(&collection, local_post).await {
+    if p.0.auth.validate().await {
+        match post_create(&collection, p.0.post).await {
             Ok(v) => HttpResponse::Ok().json(v),
             Err(e) => HttpResponse::BadRequest().body(e.to_string()),
         }
