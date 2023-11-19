@@ -63,20 +63,18 @@ pub async fn user_delete(
             "$in": [&user.name]
         }
     };
-
-    // Удаляем посты пользователя
-    collection_post
-        .delete_many(filter_post, DeleteOptions::builder().build())
-        .await?;
-
     let filter_user = doc! {
         "name": &user.name,
         "email": user.email,
+        "password": user.password,
     };
-
     // Удаляем пользователя
     let result = collection_user
         .delete_one(filter_user, DeleteOptions::builder().build())
         .await?;
+    // Удаляем посты пользователя
+    collection_post
+    .delete_many(filter_post, DeleteOptions::builder().build())
+    .await?;
     Ok(result)
 }

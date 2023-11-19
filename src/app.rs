@@ -105,21 +105,22 @@ pub async fn postall(name: web::Path<String>) -> HttpResponse {
 }
 //удаляем пользоателя
 //Конечно забавно что пользователь может удалять себя
-//Но даже если структура по имени правильная, то пользователя не удалишь.
-//Из минусов удаляться все посты.
-//так что менять с проверкой.
 #[delete("/{name}/delete")]
-pub async fn delete_user(u: web::Json<User>) -> HttpResponse {
+pub async fn delete_user(u: web::Json<RequsetUserFullDelete>) -> HttpResponse {
     let collection = get_connection_users().await;
     let collection2 = get_connection_posts().await;
-    match user_delete(&collection, &collection2, u.into_inner()).await {
-        Ok(_) => HttpResponse::Ok().body("User deleted"),
-        Err(e) => HttpResponse::BadRequest().body(e.to_string()),
+    if u.0.auth.validate().await {
+        match user_delete(&collection, &collection2, u.0.user).await {
+            Ok(_) => HttpResponse::Ok().body("User deleted"),
+            Err(e) => HttpResponse::BadRequest().body(e.to_string()),
+        }
+    } else {
+        HttpResponse::BadRequest().body("Wrong password")
     }
 }
 //удаляем пост
 #[delete("/{post}/delete")]
-pub async fn post_deleter(p: web::Json<RequsetDataDelete>) -> HttpResponse {
+pub async fn post_deleter(p: web::Json<RequsetUserDelete>) -> HttpResponse {
     let collection = get_connection_posts().await;
     let post_id = p.0.id;
     let auth = p.0.auth;
@@ -150,7 +151,7 @@ pub async fn post(post_id: web::Path<String>) -> HttpResponse {
 //Редактируем пост отправляя запрос.
 //Заменть на сегментарное редактирование.
 #[post("/{post}/edit")]
-pub async fn post_editor(p: web::Json<RequsetDataDefault>) -> HttpResponse {
+pub async fn post_editor(p: web::Json<RequsetPost>) -> HttpResponse {
     let collection = get_connection_posts().await;
     let local_post = p.0.post;
     let auth = p.0.auth;
@@ -165,7 +166,7 @@ pub async fn post_editor(p: web::Json<RequsetDataDefault>) -> HttpResponse {
 }
 
 #[post("/create")]
-pub async fn create(p: web::Json<RequsetData>) -> HttpResponse {
+pub async fn create(p: web::Json<RequsetPostCreate>) -> HttpResponse {
     let collection = get_connection_posts().await;
     let local_post = p.0.post;
     let auth = p.0.auth;
@@ -181,19 +182,24 @@ pub async fn create(p: web::Json<RequsetData>) -> HttpResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct RequsetData {
+pub struct RequsetPostCreate {
     pub post: PostCreate,
     pub auth: Auth,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct RequsetDataDefault {
+pub struct RequsetPost {
     pub post: Post,
     pub auth: Auth,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct RequsetDataDelete {
+pub struct RequsetUserDelete {
     pub id: String,
+    pub auth: Auth,
+}
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RequsetUserFullDelete {
+    pub user: User,
     pub auth: Auth,
 }
