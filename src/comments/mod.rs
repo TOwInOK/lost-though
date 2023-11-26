@@ -8,7 +8,7 @@ use mongodb::error::Error;
 use mongodb::results::UpdateResult;
 use mongodb::Collection;
 
-//Добавляем комментарии к посту
+///Добавляем комментарии к посту
 pub async fn comment_to(
     collection: &Collection<Post>,
     post_id: ObjectId,
