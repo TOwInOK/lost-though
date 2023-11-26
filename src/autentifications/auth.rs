@@ -18,9 +18,10 @@ impl Auth {
     pub fn new(name: String, password: String) -> Self {
         Self { name, password }
     }
+    ///Сравниваем полученные строки с стороками в базе
     pub async fn validate(&self) -> bool {
         let collection = get_connection_users().await;
-        match user_get(&collection, self.name.clone()).await {
+        match user_get(&collection, &self.name).await {
             Ok(Some(user)) => user.password == self.password,
             Ok(None) => false,
             Err(_) => false,

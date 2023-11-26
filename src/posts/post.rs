@@ -3,6 +3,7 @@ use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
+///Создание поста
 pub struct Post {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     pub id: Option<ObjectId>,
@@ -17,6 +18,8 @@ pub struct Post {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+///Создание поста не включает в себя:
+///ID, comments<Vec>
 pub struct PostCreate {
     pub author: Vec<String>,
     pub underlabel: String,

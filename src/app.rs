@@ -10,12 +10,12 @@ use back::user::*;
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 
-//а почему нет
+///а почему нет
 #[get("/")]
 pub async fn hello() -> impl Responder {
     HttpResponse::Ok().body("Hello world!")
 }
-//создание пользователя
+///создание пользователя
 #[post("/create")]
 pub async fn create_user(u: web::Json<User>) -> HttpResponse {
     let collection = get_connection_users().await;
@@ -30,11 +30,11 @@ pub async fn create_user(u: web::Json<User>) -> HttpResponse {
         }
     }
 }
-//инфа о пользователе
+///инфа о пользователе
 #[get("/{name}")]
 pub async fn user(name: web::Path<String>) -> HttpResponse {
     let collection = get_connection_users().await;
-    match user_get(&collection, name.to_string()).await {
+    match user_get(&collection, &name.to_string()).await {
         Ok(Some(user)) => {
             let anonymus_user = UserMin {
                 name: user.name.clone(),
@@ -50,13 +50,13 @@ pub async fn user(name: web::Path<String>) -> HttpResponse {
         Err(e) => HttpResponse::BadRequest().body(e.to_string()),
     }
 }
-//получение инфы о пользователе - вся котороя может быть в User
-//нужен пароль
-//Поменять чтобы принимала UserMin
+///получение инфы о пользователе - вся котороя может быть в User
+///нужен пароль
+///Поменять чтобы принимала UserMin
 #[get("/{name}/settings")]
 pub async fn get_user_settings(name: web::Path<String>, u: web::Json<User>) -> HttpResponse {
     let collection = get_connection_users().await;
-    match user_get(&collection, name.to_string()).await {
+    match user_get(&collection, &name.to_string()).await {
         Ok(Some(i)) => {
             if i.validate(&u.into_inner()) {
                 HttpResponse::Ok().json(i)
@@ -68,9 +68,9 @@ pub async fn get_user_settings(name: web::Path<String>, u: web::Json<User>) -> H
         Err(e) => HttpResponse::BadRequest().body(e.to_string()),
     }
 }
-//Меняем пароль отправляя пользователя
-//нужен пароль
-//Функция не логичка.
+///Меняем пароль отправляя пользователя
+///нужен пароль
+///Функция не логичка.
 #[post("/{name}/changepass")]
 pub async fn user_changer(name: web::Data<String>, u: web::Json<User>) -> HttpResponse {
     let password = &u.password;
@@ -78,7 +78,7 @@ pub async fn user_changer(name: web::Data<String>, u: web::Json<User>) -> HttpRe
     if password.is_empty() {
         return HttpResponse::BadRequest().body("Password is empty");
     }
-    match user_get(&collection, name.to_string()).await {
+    match user_get(&collection, &name.to_string()).await {
         Ok(Some(i)) => {
             if i.validate(&u) {
                 match user_change(&collection, u.into_inner()).await {
@@ -93,7 +93,7 @@ pub async fn user_changer(name: web::Data<String>, u: web::Json<User>) -> HttpRe
         Err(_e) => HttpResponse::BadRequest().body("Wrong password"),
     }
 }
-//выдаём все посты пользователя
+///выдаём все посты пользователя
 #[get("/{name}/posts")]
 pub async fn postall(name: web::Path<String>) -> HttpResponse {
     let collection = get_connection_posts().await;
@@ -102,8 +102,8 @@ pub async fn postall(name: web::Path<String>) -> HttpResponse {
         Err(e) => HttpResponse::BadRequest().body(e.to_string()),
     }
 }
-//удаляем пользоателя
-//Конечно забавно что пользователь может удалять себя
+///удаляем пользоателя
+///Конечно забавно что пользователь может удалять себя
 #[delete("/{name}/delete")]
 pub async fn delete_user(u: web::Json<RequsetUserFullDelete>) -> HttpResponse {
     let collection = get_connection_users().await;
@@ -117,7 +117,7 @@ pub async fn delete_user(u: web::Json<RequsetUserFullDelete>) -> HttpResponse {
         HttpResponse::BadRequest().body("Wrong password")
     }
 }
-//удаляем пост
+///удаляем пост
 #[delete("/{post}/delete")]
 pub async fn post_deleter(p: web::Json<RequsetUserDelete>) -> HttpResponse {
     let collection = get_connection_posts().await;
@@ -131,7 +131,7 @@ pub async fn post_deleter(p: web::Json<RequsetUserDelete>) -> HttpResponse {
     }
 }
 
-//выдача поста по id
+///выдача поста по id
 #[get("/{post_id}")]
 pub async fn post(post_id: web::Path<String>) -> HttpResponse {
     let collection = get_connection_posts().await;
@@ -145,8 +145,8 @@ pub async fn post(post_id: web::Path<String>) -> HttpResponse {
         Err(e) => HttpResponse::BadRequest().body(e.to_string()), // Вернуть ошибку, если возникла проблема
     }
 }
-//Редактируем пост отправляя запрос.
-//Заменть на сегментарное редактирование.
+///Редактируем пост отправляя запрос.
+///Заменть на сегментарное редактирование.
 #[post("/{post}/edit")]
 pub async fn post_editor(p: web::Json<RequsetPost>) -> HttpResponse {
     let collection = get_connection_posts().await;
@@ -160,6 +160,7 @@ pub async fn post_editor(p: web::Json<RequsetPost>) -> HttpResponse {
     }
 }
 
+///Создаём пост принимая RequsetPostCreate
 #[post("/create")]
 pub async fn create(p: web::Json<RequsetPostCreate>) -> HttpResponse {
     let collection = get_connection_posts().await;
@@ -173,12 +174,13 @@ pub async fn create(p: web::Json<RequsetPostCreate>) -> HttpResponse {
     }
 }
 
+///Получаем логин и пароль реализуя создания поста.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequsetPostCreate {
     pub post: PostCreate,
     pub auth: Auth,
 }
-
+// нафига логин?
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequsetPost {
     pub post: Post,

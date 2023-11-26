@@ -7,6 +7,10 @@ use mongodb::results::{DeleteResult, InsertOneResult, UpdateResult};
 use mongodb::Collection;
 use user::User;
 
+///Выдаём пользователя;
+///сравнивая его по имени;
+///если пользователь есть, то выводим ошибку,
+///нету создаём.
 pub async fn user_create(
     collection: &Collection<User>,
     user: User,
@@ -26,8 +30,8 @@ pub async fn user_create(
         Err(e) => Err(e),
     }
 }
-
-pub async fn user_get(collection: &Collection<User>, name: String) -> Result<Option<User>, Error> {
+///Фильтруем пользователя по имени ```collection.find_one``` и выдаём Some(user)
+pub async fn user_get(collection: &Collection<User>, name: &String) -> Result<Option<User>, Error> {
     let filter = doc! {
         "name": name
     };
@@ -74,7 +78,7 @@ pub async fn user_delete(
         .await?;
     // Удаляем посты пользователя
     collection_post
-    .delete_many(filter_post, DeleteOptions::builder().build())
-    .await?;
+        .delete_many(filter_post, DeleteOptions::builder().build())
+        .await?;
     Ok(result)
 }
