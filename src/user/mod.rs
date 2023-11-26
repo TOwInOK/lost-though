@@ -1,4 +1,5 @@
 pub mod user;
+use crate::autentifications::auth::Auth;
 use crate::posts::post::Post;
 use mongodb::bson::doc;
 use mongodb::error::Error;
@@ -7,17 +8,20 @@ use mongodb::results::{DeleteResult, InsertOneResult, UpdateResult};
 use mongodb::Collection;
 use user::User;
 
+use self::user::Role;
+
 ///Выдаём пользователя;
 ///сравнивая его по имени;
 ///если пользователь есть, то выводим ошибку,
 ///нету создаём.
 pub async fn user_create(
     collection: &Collection<User>,
-    user: User,
+    mut user: User,
 ) -> Result<InsertOneResult, Error> {
     let filter = doc! {
         "name": &user.name
     };
+    user.role = Role::Default;
     match collection.find_one(filter, None).await {
         Ok(Some(_)) => Err(Error::from(std::io::Error::new(
             std::io::ErrorKind::AlreadyExists,
@@ -60,7 +64,7 @@ pub async fn user_change(collection: &Collection<User>, user: User) -> Result<Up
 pub async fn user_delete(
     collection_user: &Collection<User>,
     collection_post: &Collection<Post>,
-    user: User,
+    user: Auth,
 ) -> Result<DeleteResult, Error> {
     let filter_post = doc! {
         "author": {
@@ -69,7 +73,6 @@ pub async fn user_delete(
     };
     let filter_user = doc! {
         "name": &user.name,
-        "email": user.email,
         "password": user.password,
     };
     // Удаляем пользователя

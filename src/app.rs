@@ -3,7 +3,7 @@ use std::str::FromStr;
 use actix_web::{delete, get, post, web, HttpResponse, Responder};
 use back::autentifications::auth::Auth;
 use back::mongolinks::cget::{get_connection_posts, get_connection_users};
-use back::posts::post::{Post, PostCreate};
+use back::posts::post::PostCreate;
 use back::posts::*;
 use back::user::user::{User, UserMin};
 use back::user::*;
@@ -33,6 +33,7 @@ pub async fn create_user(u: web::Json<User>) -> HttpResponse {
 ///инфа о пользователе
 #[get("/{name}")]
 pub async fn user(name: web::Path<String>) -> HttpResponse {
+
     let collection = get_connection_users().await;
     match user_get(&collection, &name.to_string()).await {
         Ok(Some(user)) => {
@@ -52,13 +53,12 @@ pub async fn user(name: web::Path<String>) -> HttpResponse {
 }
 ///получение инфы о пользователе - вся котороя может быть в User
 ///нужен пароль
-///Поменять чтобы принимала UserMin
-#[get("/{name}/settings")]
-pub async fn get_user_settings(name: web::Path<String>, u: web::Json<User>) -> HttpResponse {
+#[get("/settings")]
+pub async fn get_user_settings(u: web::Json<Auth>) -> HttpResponse {
     let collection = get_connection_users().await;
-    match user_get(&collection, &name.to_string()).await {
+    match user_get(&collection, &u.name.to_string()).await {
         Ok(Some(i)) => {
-            if i.validate(&u.into_inner()) {
+            if i.validate_anonimus(&u.into_inner()) {
                 HttpResponse::Ok().json(i)
             } else {
                 HttpResponse::BadRequest().body("Wrong password")
@@ -70,15 +70,14 @@ pub async fn get_user_settings(name: web::Path<String>, u: web::Json<User>) -> H
 }
 ///Меняем пароль отправляя пользователя
 ///нужен пароль
-///Функция не логичка.
-#[post("/{name}/changepass")]
-pub async fn user_changer(name: web::Data<String>, u: web::Json<User>) -> HttpResponse {
+#[post("/changepass")]
+pub async fn user_changer(u: web::Json<User>) -> HttpResponse {
     let password = &u.password;
     let collection = get_connection_users().await;
     if password.is_empty() {
         return HttpResponse::BadRequest().body("Password is empty");
     }
-    match user_get(&collection, &name.to_string()).await {
+    match user_get(&collection, &u.name.to_string()).await {
         Ok(Some(i)) => {
             if i.validate(&u) {
                 match user_change(&collection, u.into_inner()).await {
@@ -104,26 +103,13 @@ pub async fn postall(name: web::Path<String>) -> HttpResponse {
 }
 ///удаляем пользоателя
 ///Конечно забавно что пользователь может удалять себя
-#[delete("/{name}/delete")]
-pub async fn delete_user(u: web::Json<RequsetUserFullDelete>) -> HttpResponse {
+#[delete("/delete")]
+pub async fn delete_user(u: web::Json<Auth>) -> HttpResponse {
     let collection = get_connection_users().await;
     let collection2 = get_connection_posts().await;
-    if u.0.auth.validate().await {
-        match user_delete(&collection, &collection2, u.0.user).await {
+    if u.validate().await {
+        match user_delete(&collection, &collection2, u.0).await {
             Ok(_) => HttpResponse::Ok().body("User deleted"),
-            Err(e) => HttpResponse::BadRequest().body(e.to_string()),
-        }
-    } else {
-        HttpResponse::BadRequest().body("Wrong password")
-    }
-}
-///удаляем пост
-#[delete("/{post}/delete")]
-pub async fn post_deleter(p: web::Json<RequsetUserDelete>) -> HttpResponse {
-    let collection = get_connection_posts().await;
-    if p.0.auth.validate().await {
-        match post_delete(&collection, p.0.id).await {
-            Ok(_v) => HttpResponse::Ok().body("Post deleted"),
             Err(e) => HttpResponse::BadRequest().body(e.to_string()),
         }
     } else {
@@ -160,9 +146,9 @@ pub async fn post_editor(p: web::Json<RequsetPost>) -> HttpResponse {
     }
 }
 
-///Создаём пост принимая RequsetPostCreate
+///Создаём пост принимая RequsetPost
 #[post("/create")]
-pub async fn create(p: web::Json<RequsetPostCreate>) -> HttpResponse {
+pub async fn create(p: web::Json<RequsetPost>) -> HttpResponse {
     let collection = get_connection_posts().await;
     if p.0.auth.validate().await {
         match post_create(&collection, p.0.post).await {
@@ -174,26 +160,24 @@ pub async fn create(p: web::Json<RequsetPostCreate>) -> HttpResponse {
     }
 }
 
-///Получаем логин и пароль реализуя создания поста.
-#[derive(Serialize, Deserialize, Debug)]
-pub struct RequsetPostCreate {
-    pub post: PostCreate,
-    pub auth: Auth,
-}
-// нафига логин?
-#[derive(Serialize, Deserialize, Debug)]
-pub struct RequsetPost {
-    pub post: Post,
-    pub auth: Auth,
+///удаляем пост
+#[delete("/{post}/delete")]
+pub async fn post_deleter(id: web::Path<String>, p: web::Json<Auth>) -> HttpResponse {
+    let collection = get_connection_posts().await;
+    if p.0.validate().await {
+        match post_delete(&collection, id.to_string()).await {
+            Ok(_v) => HttpResponse::Ok().body("Post deleted"),
+            Err(e) => HttpResponse::BadRequest().body(e.to_string()),
+        }
+    } else {
+        HttpResponse::BadRequest().body("Wrong password")
+    }
 }
 
+
+///Получаем логин и пароль реализуя создания поста.
 #[derive(Serialize, Deserialize, Debug)]
-pub struct RequsetUserDelete {
-    pub id: String,
-    pub auth: Auth,
-}
-#[derive(Serialize, Deserialize, Debug)]
-pub struct RequsetUserFullDelete {
-    pub user: User,
+pub struct RequsetPost {
+    pub post: PostCreate,
     pub auth: Auth,
 }

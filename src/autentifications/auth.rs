@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Auth {
     pub name: String,
-    password: String,
+    pub password: String,
 }
 //Не смог релизовать JWT в рамках проекта, поэтому просто храним пару имени и пароля
 //В будующем заменить пароль на зашифрованный с солью
@@ -32,6 +32,9 @@ impl Auth {
 //Доп имплементация чтобы не городить костыли.
 impl User {
     pub fn validate(&self, another: &User) -> bool {
+        self.password == another.password
+    }
+    pub fn validate_anonimus(&self, another: &Auth) -> bool {
         self.password == another.password
     }
 }

@@ -32,7 +32,7 @@ pub async fn post_create(
 //Редактирование поста
 pub async fn post_edit(
     collection: &Collection<Post>,
-    post: Post,
+    post: PostCreate,
     author: String,
 ) -> Result<UpdateResult, Box<Error>> {
     let filter = doc! {

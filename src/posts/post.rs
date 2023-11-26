@@ -21,6 +21,8 @@ pub struct Post {
 ///Создание поста не включает в себя:
 ///ID, comments<Vec>
 pub struct PostCreate {
+    #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
+    pub id: Option<ObjectId>,
     pub author: Vec<String>,
     pub underlabel: String,
     pub label: String,
