@@ -4,7 +4,6 @@ use chrono::Utc;
 use futures::StreamExt;
 use mongodb::{bson::{doc, oid::ObjectId}, error::Error, options::{DeleteOptions, UpdateOptions}, results::{DeleteResult, InsertOneResult, UpdateResult}, Collection};
 use post::Post;
-
 use self::post::PostCreate;
 
 //Создание поста
@@ -35,7 +34,7 @@ pub async fn post_edit(
     collection: &Collection<Post>,
     post: Post,
     author: String,
-) -> Result<UpdateResult, Error> {
+) -> Result<UpdateResult, Box<Error>> {
     let filter = doc! {
         "_id": post.id,
         "author": author
@@ -53,7 +52,9 @@ pub async fn post_edit(
     collection
         .update_one(filter, update, UpdateOptions::builder().build())
         .await
+        .map_err(|e| e.into())
 }
+
 
 //Удаление поста
 pub async fn post_delete(

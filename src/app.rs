@@ -43,7 +43,6 @@ pub async fn user(name: web::Path<String>) -> HttpResponse {
             println!("{:?}", &user);
             HttpResponse::Ok().json(anonymus_user)
         }
-        //HttpResponse::Ok().json(user),
         Ok(None) => {
             println!("User not found");
             HttpResponse::NotFound().body("User not found")
