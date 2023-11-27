@@ -247,22 +247,22 @@ const HTML: &str = r#"
 
     <h3>/user</h3>
 
-    <h4>/&lt;name&gt; - for example, /anton</h4>
+    <h4>Post: /&lt;name&gt; - for example, /anton</h4>
     <p>Use the USERNAME in the path to retrieve the UserMin structure.</p>
 
-    <h4>/&lt;name&gt;/posts</h4>
+    <h4>GET: /&lt;name&gt;/posts</h4>
     <p>Get all posts by the USERNAME.</p>
 
-    <h4>/settings</h4>
+    <h4>GET: /settings</h4>
     <p>Using the Auth structure to get user data in the form of the User structure for further use.</p>
 
-    <h4>/changepass</h4>
+    <h4>POST: /changepass</h4>
     <p>Requires a saved User structure for modification.</p>
 
-    <h4>/delete</h4>
+    <h4>DELETE: /delete</h4>
     <p>Send the Auth structure.</p>
 
-    <h4>/create</h4>
+    <h4>POST: /create</h4>
     <p>Create a user using the User structure.</p>
 
     <pre>
@@ -291,16 +291,16 @@ const HTML: &str = r#"
 
     <h3>/post</h3>
 
-    <h4>/&lt;post_id&gt; - for example, /6557b9f2417e299f07b8096a</h4>
+    <h4>GET: /&lt;post_id&gt; - for example, /6557b9f2417e299f07b8096a</h4>
     <p>Send the id<br> Get the Post.</p>
 
-    <h4>/&lt;post_id&gt;/edit</h4>
+    <h4>POST: /&lt;post_id&gt;/edit</h4>
     <p>Send RequsetPost (id not required).</p>
 
-    <h4>/create</h4>
+    <h4>POST: /create</h4>
     <p>Send RequsetPost<br> Get Post.</p>
 
-    <h4>/&lt;post&gt;/delete</h4>
+    <h4>DELETE: /&lt;post&gt;/delete</h4>
     <p>Decided not to create another Api request type.<br> Send id<br> Send Auth<br> Get HttpResponse (we get this type
         of message everywhere, only the json is always custom if it is implied).</p>
 
