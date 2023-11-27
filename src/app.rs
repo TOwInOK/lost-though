@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use actix_web::{delete, get, post, web, HttpResponse, Responder};
+use actix_web::{delete, get, post, web, HttpResponse, Responder, HttpRequest};
 use back::autentifications::auth::Auth;
 use back::mongolinks::cget::{get_connection_posts, get_connection_users};
 use back::posts::post::PostCreate;
@@ -191,6 +191,57 @@ pub async fn post_all() -> HttpResponse {
 pub async fn post_all_page(n: web::Path<usize>) -> HttpResponse {
     let collection = get_connection_posts().await;
     match post_get_page(&collection, *n).await {
+        Ok(v) => HttpResponse::Ok().json(v),
+        Err(e) => HttpResponse::BadRequest().body(e.to_string()),
+    }
+}
+///Поиск поста по конкретной строке, но расплывчато.
+///Строка делится на подстроки и выполняется поиск по подстрокам
+#[get("/vague/{search}")]
+pub async fn search_vague_scope(search: web::Path<String>) -> HttpResponse {
+    let collection = get_connection_posts().await;
+    match post_search_vague(&collection, search.to_string()).await {
+        Ok(v) => HttpResponse::Ok().json(v),
+        Err(e) => HttpResponse::BadRequest().body(e.to_string()),
+    }
+}
+///Поиск поста по конкретной строке, точно.
+///Что ищём, то и находим.
+#[get("/fair/{search}")]
+pub async fn search_fair_scope(search: web::Path<String>) -> HttpResponse {
+    let collection = get_connection_posts().await;
+    match post_search_fair(&collection, search.to_string()).await {
+        Ok(v) => HttpResponse::Ok().json(v),
+        Err(e) => HttpResponse::BadRequest().body(e.to_string()),
+    }
+}
+
+///Поиск поста по конкретной строке, но расплывчато.
+///Строка делится на подстроки и выполняется поиск по подстрокам
+///По страницам
+#[get("/vague/{search}/{page}")]
+pub async fn search_vague_scope_pages(req: HttpRequest) -> HttpResponse {
+    let search = req.match_info().get("search").unwrap();
+    let page = req.match_info().get("page").unwrap();
+    let page = page.parse::<usize>().unwrap();
+    let collection = get_connection_posts().await;
+    match post_search_vague_page(&collection, search.to_string(), page).await {
+        Ok(v) => HttpResponse::Ok().json(v),
+        Err(e) => HttpResponse::BadRequest().body(e.to_string()),
+    }
+}
+
+
+///Поиск поста по конкретной строке, точно.
+///Что ищём, то и находим.
+/// По страницам
+#[get("/fair/{search}/{page}")]
+pub async fn search_fair_scope_pages(req: HttpRequest) -> HttpResponse {
+    let search = req.match_info().get("search").unwrap();
+    let page = req.match_info().get("page").unwrap();
+    let page = page.parse::<usize>().unwrap();
+    let collection = get_connection_posts().await;
+    match post_search_fair_page(&collection, search.to_string(), page).await {
         Ok(v) => HttpResponse::Ok().json(v),
         Err(e) => HttpResponse::BadRequest().body(e.to_string()),
     }
@@ -407,6 +458,23 @@ const HTML: &str = r#"
         }
       </code>
     </pre>
+
+    <h2>/search</h2>
+
+    <h4>GET: /vague/{text}</h4>
+
+    <p>Send text<br> Getting posts with vague searches</p>
+
+    <h4>GET: /fair/{text}</h4>
+    <p>Send text<br> Getting posts with accurate searches</p>
+
+    <h4>GET: /vague/{text}/{number of page}</h4>
+    <p>Send text<br> Send number of page<br> Getting posts with vague searches<br> 0 = 10 too<br> 1 number = 10 posts</p>
+
+    <h4>GET: /fair/{text}/{number of page}</h4>
+    <p>Send text<br> Send number of page<br> Getting posts with accurate searches<br> 0 = 10 too<br> 1 number = 10 posts</p>
+
+
 </body>
 
 </html>

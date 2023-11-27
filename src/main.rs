@@ -28,6 +28,13 @@ async fn main() -> std::io::Result<()> {
                     .service(post_all)
                     .service(post_all_page),
             )
+            .service(
+              web::scope("/search")
+              .service(search_vague_scope)
+              .service(search_fair_scope)
+              .service(search_vague_scope_pages)
+              .service(search_fair_scope_pages),
+            )
     })
     .bind(("0.0.0.0", 8080))?
     .run()

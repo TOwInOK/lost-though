@@ -159,3 +159,151 @@ pub async fn post_get_page(
     println!("{:#?}", posts);
     Ok(posts)
 }
+
+///Получаем все результаты содержащие слова из строки
+pub async fn post_search_vague(
+    collection: &Collection<Post>,
+    search_string: String,
+) -> Result<Vec<Option<Post>>, Error> {
+    //разделение строки на подстроки
+    let search_string = search_string
+        .split_whitespace()
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>();
+    let filter = doc! {
+        "$or": [
+            { "label": { "$regex": search_string.join("|"), "$options": "i" } },
+            { "underlabel": { "$regex": search_string.join("|"), "$options": "i" } },
+            { "text": { "$regex": search_string.join("|"), "$options": "i" } },
+            { "footer": { "$regex": search_string.join("|"), "$options": "i" } },
+        ]
+     };
+    let mut cursor = collection
+        .find(filter, FindOptions::builder().build())
+        .await?;
+    // Используем `StreamExt` для асинхронного перебора результатов
+    let mut posts = Vec::new();
+    while let Some(post) = cursor.next().await {
+        match post {
+            Ok(post) => {
+                posts.push(Some(post));
+            }
+            Err(e) => {
+                return Err(e);
+            }
+        }
+    }
+    Ok(posts)
+}
+
+///Поиск поста по конкретной строчке
+pub async fn post_search_fair(
+    collection: &Collection<Post>,
+    search_string: String,
+) -> Result<Vec<Option<Post>>, Error> {
+    let filter = doc! {
+        "$text": { "$search": search_string }
+    };
+    let mut cursor = collection
+        .find(filter, FindOptions::builder().build())
+        .await?;
+    // Используем `StreamExt` для асинхронного перебора результатов
+    let mut posts = Vec::new();
+    while let Some(post) = cursor.next().await {
+        match post {
+            Ok(post) => {
+                posts.push(Some(post));
+            }
+            Err(e) => {
+                return Err(e);
+            }
+        }
+    }
+    Ok(posts)
+}
+
+/// Поиск поста расплывчато по страницам
+pub async fn post_search_vague_page(
+    collection: &Collection<Post>,
+    search_string: String,
+    page: usize,
+) -> Result<Vec<Option<Post>>, Error> {
+    let skiprange = match page {
+        0 => 0,
+        1 => 0,
+        _ => (page - 1) * 10,
+        
+    };
+    let limitrange = (skiprange + 10) as i64;
+    //разделение строки на подстроки
+    let search_string = search_string
+        .split_whitespace()
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>();
+    let filter = doc! {
+        "$or": [
+            { "label": { "$regex": search_string.join("|"), "$options": "i" } },
+            { "underlabel": { "$regex": search_string.join("|"), "$options": "i" } },
+            { "text": { "$regex": search_string.join("|"), "$options": "i" } },
+            { "footer": { "$regex": search_string.join("|"), "$options": "i" } },
+        ]
+    };
+    let options = mongodb::options::FindOptions::builder()
+        .skip(skiprange as u64)
+        .limit(limitrange)
+        .build();
+    let mut cursor = collection
+        .find(filter, options)
+        .await?;
+    // Используем `StreamExt` для асинхронного перебора результатов
+    let mut posts = Vec::new();
+    while let Some(post) = cursor.next().await {
+        match post {
+            Ok(post) => {
+                posts.push(Some(post));
+            }
+            Err(e) => {
+                return Err(e);
+            }
+        }
+    }
+    Ok(posts)
+}
+
+///Поиск поста по конкретной строчке постранично
+pub async fn post_search_fair_page(
+    collection: &Collection<Post>,
+    search_string: String,
+    page: usize,
+) -> Result<Vec<Option<Post>>, Error> {
+    let skiprange = match page {
+        0 => 0,
+        1 => 0,
+        _ => (page - 1) * 10,
+        
+    };
+    let limitrange = (skiprange + 10) as i64;
+    let filter = doc! {
+        "$text": { "$search": search_string }
+    };
+    let options = mongodb::options::FindOptions::builder()
+    .skip(skiprange as u64)
+    .limit(limitrange)
+    .build();
+    let mut cursor = collection
+        .find(filter, options)
+        .await?;
+    // Используем `StreamExt` для асинхронного перебора результатов
+    let mut posts = Vec::new();
+    while let Some(post) = cursor.next().await {
+        match post {
+            Ok(post) => {
+                posts.push(Some(post));
+            }
+            Err(e) => {
+                return Err(e);
+            }
+        }
+    }
+    Ok(posts)
+}
