@@ -176,6 +176,26 @@ pub async fn post_deleter(id: web::Path<String>, p: web::Json<Auth>) -> HttpResp
     }
 }
 
+///Выдача всех постов
+#[get("/page/all")]
+pub async fn post_all() -> HttpResponse {
+    let collection = get_connection_posts().await;
+    match post_getall_all(&collection).await {
+        Ok(v) => HttpResponse::Ok().json(v),
+        Err(e) => HttpResponse::BadRequest().body(e.to_string()),
+    }
+}
+
+///Выдача постов от 0 до n
+#[get("/page/{n}")]
+pub async fn post_all_page(n: web::Path<usize>) -> HttpResponse {
+    let collection = get_connection_posts().await;
+    match post_get_page(&collection, *n).await {
+        Ok(v) => HttpResponse::Ok().json(v),
+        Err(e) => HttpResponse::BadRequest().body(e.to_string()),
+    }
+}
+
 
 ///Получаем логин и пароль реализуя создания поста.
 #[derive(Serialize, Deserialize, Debug)]
@@ -299,6 +319,15 @@ const HTML: &str = r#"
 
     <h4>POST: /create</h4>
     <p>Send RequsetPost<br> Get Post.</p>
+
+    
+    <h4>POST: /page/all</h4>
+
+    <p>Send nothing<br> Get all posts in bd ;)</p>
+
+    <h4>POST: /page/{number}</h4>
+
+    <p>Send number of page<br> 1 number = 10 posts<br> 2 number = 20 posts<br> end etc...</p>
 
     <h4>DELETE: /&lt;post&gt;/delete</h4>
     <p>Decided not to create another Api request type.<br> Send id<br> Send Auth<br> Get HttpResponse (we get this type

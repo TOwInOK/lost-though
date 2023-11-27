@@ -24,7 +24,9 @@ async fn main() -> std::io::Result<()> {
                     .service(post_editor)
                     .service(post_deleter)
                     .service(post_editor)
-                    .service(create),
+                    .service(create)
+                    .service(post_all)
+                    .service(post_all_page),
             )
     })
     .bind(("0.0.0.0", 8080))?
