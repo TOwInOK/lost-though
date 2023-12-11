@@ -14,10 +14,10 @@ GET http://127.0.0.1:8080/user/test21fd/settings HTTP/1.1
 Content-Type: application/json
 
 {
-    "name": "test21fd",
-    "password": "example2",
-    "email": "test@test.ru"
+  "name": "test21fd",
+  "password": "example2"
 }
+
 
 GET http://127.0.0.1:8080/user/test21fd/settings HTTP/1.1
 Content-Type: application/json
@@ -33,12 +33,12 @@ Content-Type: application/json
 
 {
   "post": {
-    "author": ["test21fd"],
-    "underlabel": "Example Underlabel",
-    "label": "Example Label",
+    "author": ["TOwInOK"],
+    "underlabel": "Simlp to use",
+    "label": "Lorem ipsum BolerPlate",
     "text": "Example Text",
     "footer": "Example Footer",
-    "tags": ["Tag1", "Tag2"]
+    "tags": ["Loremipsum"]
   },
   "auth": {
     "name": "test21fd",

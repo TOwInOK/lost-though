@@ -26,7 +26,9 @@ async fn main() -> std::io::Result<()> {
                     .service(post_editor)
                     .service(create)
                     .service(post_all)
-                    .service(post_all_page),
+                    .service(post_all_page)
+                    .service(add_comment)
+                    .service(delete_comment),
             )
             .service(
               web::scope("/search")

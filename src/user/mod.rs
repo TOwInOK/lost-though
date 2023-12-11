@@ -40,7 +40,10 @@ pub async fn user_get(collection: &Collection<User>, name: &String) -> Result<Op
         "name": name
     };
     match collection.find_one(filter, None).await {
-        Ok(result) => Ok(result),
+        Ok(result) => {
+            eprintln!("{:#?}", result);
+            Ok(result)}
+            ,
         Err(e) => Err(e),
     }
 }
