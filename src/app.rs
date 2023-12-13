@@ -1,19 +1,18 @@
-use std::str::FromStr;
-
-use actix_web::{delete, get, post, web, HttpResponse, Responder, HttpRequest};
+use actix_web::put;
+use actix_web::{delete, get, post, web, HttpRequest, HttpResponse, Responder};
 use back::autentifications::auth::Auth;
 use back::comments::comment_delete;
+use back::comments::{comment::Comment, comment_add};
 use back::mongolinks::cget::{get_connection_posts, get_connection_users};
 use back::posts::post::PostCreate;
 use back::posts::*;
-use back::user::*;
-use back::comments::{comment_add, comment::Comment};
-use actix_web::put;
-use mongodb::bson::oid::ObjectId;
-use serde::{Deserialize, Serialize};
 use back::user::user::{User, UserMin};
-use std::error::Error;
+use back::user::*;
+use mongodb::bson::oid::ObjectId;
 use mongodb::Collection;
+use serde::{Deserialize, Serialize};
+use std::error::Error;
+use std::str::FromStr;
 
 //Добавь коментарий к посту
 
@@ -40,7 +39,6 @@ pub async fn create_user(u: web::Json<User>) -> HttpResponse {
 ///инфа о пользователе
 #[get("/{name}")]
 pub async fn user(name: web::Path<String>) -> HttpResponse {
-
     let collection = get_connection_users().await;
     match user_get(&collection, &name.to_string()).await {
         Ok(Some(user)) => {
@@ -72,9 +70,7 @@ pub async fn get_user_settings(name: web::Path<String>, u: web::Json<Auth>) -> H
                 HttpResponse::Forbidden().body("Wrong password")
             }
         }
-        Ok(None) => {
-            HttpResponse::NoContent().body("")
-        },
+        Ok(None) => HttpResponse::NoContent().body(""),
         Err(e) => HttpResponse::BadRequest().body(e.to_string()),
     }
 }
@@ -242,7 +238,6 @@ pub async fn search_vague_scope_pages(req: HttpRequest) -> HttpResponse {
     }
 }
 
-
 ///Поиск поста по конкретной строке, точно.
 ///Что ищём, то и находим.
 /// По страницам
@@ -298,7 +293,6 @@ pub async fn delete_comment(post_id: web::Path<String>, auth: web::Json<Auth>) -
     } else {
         HttpResponse::Forbidden().body("Wront data for auth")
     }
-
 }
 
 ///Получаем логин и пароль реализуя создания поста.
@@ -313,7 +307,6 @@ pub struct UserChanger {
     pub user: User,
     pub newpassword: String,
 }
-
 
 const HTML: &str = r#"
 <!DOCTYPE html>
@@ -431,7 +424,7 @@ const HTML: &str = r#"
     <h4>POST: /create</h4>
     <p>Send RequsetPost<br> Get Post.</p>
 
-    
+
     <h4>POST: /page/all</h4>
 
     <p>Send nothing<br> Get all posts in bd ;)</p>

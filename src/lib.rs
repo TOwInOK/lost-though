@@ -3,9 +3,9 @@ pub mod comments;
 pub mod mongolinks;
 pub mod posts;
 pub mod user;
-
 use crate::user::user::Role;
 use crate::user::user::User;
+use clap::Parser;
 use mongodb::bson::doc;
 use mongodb::error::Error;
 use mongodb::options::UpdateOptions;
@@ -73,5 +73,47 @@ pub async fn is_admin(collection: &Collection<User>, name: String) -> bool {
     match collection.find_one(filter, None).await {
         Ok(_result) => true,
         Err(_e) => false,
+    }
+}
+
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+pub struct Cli {
+    ///Port for web
+    #[arg(short = 'w', long = "port", default_value_t = 8080)]
+    web_port: u16,
+    ///Adress for mongo db
+    #[arg(short = 'a', long = "adress", default_value_t = format!("0.0.0.0"))]
+    adress: String,
+    ///Login for auth into db (mongo)
+    #[arg(short = 'l', long = "mlogin")]
+    mongo_login: Option<String>,
+    ///Password for auth into db (mongo)
+    #[arg(short = 'p', long = "mpassword")]
+    mongo_password: Option<String>,
+    ///Port for db (mongo)
+    #[arg(short = 'm', long = "port", default_value_t = 27017)]
+    mongo_port: u16,
+}
+
+impl Cli {
+    pub async fn push() -> Self {
+        let cli = Cli::parse();
+        cli
+    }
+    pub async fn mongoadress() -> String {
+        let cli = Cli::parse();
+        let output = format!(
+            "mongodb://{}:{}@{}:{}",
+            cli.mongo_login.unwrap_or_default(),
+            cli.mongo_password.unwrap_or_default(),
+            cli.adress,
+            cli.mongo_port
+        );
+        output
+    }
+    pub async fn web_port() -> u16 {
+        let cli = Cli::parse();
+        cli.web_port
     }
 }

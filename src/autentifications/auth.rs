@@ -38,4 +38,3 @@ impl User {
         self.password == another.password
     }
 }
-
