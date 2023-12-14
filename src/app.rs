@@ -9,17 +9,23 @@ use back::posts::*;
 use back::user::user::{User, UserMin};
 use back::user::*;
 use mongodb::bson::oid::ObjectId;
-use mongodb::Collection;
 use serde::{Deserialize, Serialize};
-use std::error::Error;
 use std::str::FromStr;
+use back::sendcode::email::send_password_code;
+use actix_files as fs;
 
-//Добавь коментарий к посту
 
-///а почему нет
+
 #[get("/")]
-pub async fn hello() -> impl Responder {
-    HttpResponse::Ok().body(HTML)
+async fn index() -> impl Responder {
+    let path = "static/about.html";
+    let file = fs::NamedFile::open_async(path).await;
+    file
+}
+#[get("/{path:.*\\.(html|css|js)}")]
+async fn indexx(path: web::Path<String>) -> actix_web::Result<fs::NamedFile> {
+    let path = format!("static/{}", path);
+    Ok(fs::NamedFile::open(path)?)
 }
 ///создание пользователя
 #[post("/create")]
@@ -255,14 +261,20 @@ pub async fn search_fair_scope_pages(req: HttpRequest) -> HttpResponse {
 #[get("/code/{name}")]
 pub async fn get_code(name: web::Path<String>) -> HttpResponse {
     let collection = get_connection_users().await;
-    match code_send(collection, name.to_string()).await {
-        Ok(_) => HttpResponse::Ok().json("Code send"),
-        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
-    }
+    // match code_send(collection, name.to_string()).await {
+    //     Ok(_) => HttpResponse::Ok().json("Code send"),
+    //     Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    // }
+    todo!()
 }
 
-pub async fn code_send(_collection: Collection<User>, _name: String) -> Result<(), Box<dyn Error>> {
-    Ok((todo!("Сделать отсылку кодов")))
+#[get("/code/test")]
+pub async fn code_send() -> HttpResponse {
+    let to = "nqcq@tuta.io".to_string();
+    match send_password_code(to).await {
+        Ok(_) => HttpResponse::Ok().body("Code send"),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    }
 }
 
 #[post("{post}/comment/add")]

@@ -3,6 +3,7 @@ pub mod comments;
 pub mod mongolinks;
 pub mod posts;
 pub mod user;
+pub mod sendcode;
 use crate::user::user::Role;
 use crate::user::user::User;
 use clap::Parser;
@@ -76,24 +77,52 @@ pub async fn is_admin(collection: &Collection<User>, name: String) -> bool {
     }
 }
 
+/// Get args from env
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
-    ///Port for web
-    #[arg(short = 'w', long = "port", default_value_t = 8080)]
+    ///WEB PORT
+    #[arg(short = 'p', long = "port", default_value_t = 8080)]
     web_port: u16,
+
+    ////MongoDB
     ///Adress for mongo db
-    #[arg(short = 'a', long = "adress", default_value_t = format!("0.0.0.0"))]
-    adress: String,
+    #[arg(short = 'a', long = "mongo-adress", default_value_t = format!("127.0.0.1"))]
+    mongo_adress: String,
     ///Login for auth into db (mongo)
-    #[arg(short = 'l', long = "mlogin")]
+    #[arg(long = "mongo-login")]
     mongo_login: Option<String>,
     ///Password for auth into db (mongo)
-    #[arg(short = 'p', long = "mpassword")]
+    #[arg(long = "mongo-password")]
     mongo_password: Option<String>,
     ///Port for db (mongo)
-    #[arg(short = 'm', long = "port", default_value_t = 27017)]
+    #[arg(long = "mongo-port", default_value_t = 27017)]
     mongo_port: u16,
+
+    ////REDIS
+    ///Login for auth into db (redis)
+    #[arg(long = "redis-login")]
+    redis_login: Option<String>,
+    ///Password for auth into db (mongo)
+    #[arg(long = "redis-password")]
+    redis_password: Option<String>,
+    ///Port for redis
+    #[arg(long = "redis-port", default_value_t = 6380)]
+    redis_port: u16,
+    #[arg(long = "redis-adress", default_value_t = format!("127.0.0.1"))]
+    redis_adress: String,
+
+    ////SMTP
+    /// Login smpt
+    #[arg(long = "smtp-login")]
+    smtp_login: String,
+    /// Password (or secure code) smtp
+    #[arg(long = "smtp-password")]
+    smtp_password: String,
+    /// adress smpt
+    #[arg(long = "smtp-adress")]
+    smtp_adress: String,
+
 }
 
 impl Cli {
@@ -101,13 +130,13 @@ impl Cli {
         let cli = Cli::parse();
         cli
     }
-    pub async fn mongoadress() -> String {
+    pub async fn mongo_adress() -> String {
         let cli = Cli::parse();
         let output = format!(
             "mongodb://{}:{}@{}:{}",
             cli.mongo_login.unwrap_or_default(),
             cli.mongo_password.unwrap_or_default(),
-            cli.adress,
+            cli.mongo_adress,
             cli.mongo_port
         );
         output
@@ -115,5 +144,24 @@ impl Cli {
     pub async fn web_port() -> u16 {
         let cli = Cli::parse();
         cli.web_port
+    }
+    pub async fn redis_adress() -> String {
+        let cli = Cli::parse();
+        let output = format!(
+            "redis://{}:{}@{}:{}",
+            cli.redis_login.unwrap_or_default(),
+            cli.redis_password.unwrap_or_default(),
+            cli.redis_adress,
+            cli.redis_port
+        );
+        output
+    }
+    pub async fn smtp_login() -> String {
+        let cli = Cli::parse();
+        cli.smtp_login
+    }
+    pub async fn smtp_password() -> String {
+        let cli = Cli::parse();
+        cli.smtp_password
     }
 }

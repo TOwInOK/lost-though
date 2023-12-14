@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search</title>
+    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</head>
+    <body>
+        <div class="sidenav">
+            <h1 class="top_side">Scopes:</h1>
+            <a href="/about.html">About</a>
+            <a href="/user.html">User</a>
+            <a href="/post.html">Post</a>
+            <a href="/search.html">Search</a>
+        </div>
+        <div class="main">
+            <h1>Search</h1>
+            <p class="p-description">{text}</p>
+            <p>{text} - just the String type</p>
+            <p class="p-description">GET: /vague/{text}</p>
+            <p>Send text Getting posts with vague searches</p>
+            <p class="p-description">GET: /fair/{text}</p>
+            <p>Send text Getting posts with accurate searches</p>
+            <p class="p-description">GET: /vague/{text}/{number of page}</p>
+            <p>Send text Send number of page Getting posts with vague searches<br> 0 = 10 too<br> 1 number = 10 posts</p>
+            <p class="p-description">GET: /fair/{text}/{number of page}</p>
+            <p>Send text Send number of page Getting posts with accurate searches<br> 0 = 10 too<br> 1 number = 10 posts</p>
+        </div>
+    </body>
+</html>
+
+ 

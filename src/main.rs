@@ -1,4 +1,5 @@
 mod app;
+
 use actix_web::{middleware::NormalizePath, web, App, HttpServer};
 use app::*;
 use back::Cli;
@@ -10,7 +11,8 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .wrap(NormalizePath::default())
-            .service(hello)
+            .service(index)
+            .service(indexx)
             .service(
                 web::scope("/user")
                     .service(user)
@@ -18,7 +20,8 @@ async fn main() -> std::io::Result<()> {
                     .service(get_user_settings)
                     .service(user_changer)
                     .service(delete_user)
-                    .service(create_user),
+                    .service(create_user)
+                    .service(code_send),
             )
             .service(
                 web::scope("/post")

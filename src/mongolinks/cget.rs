@@ -2,13 +2,11 @@ use crate::posts::post::Post;
 use crate::user::user::User;
 use crate::Cli;
 use mongodb::{options::ClientOptions, Client, Collection};
-///Создаём точку доступа для mongo
-//const ADDRESS: &str = "mongodb://root:example@192.168.0.15:27017";
 
 ///Создание соединения с базой данных к полям подбазе users в базе Main
 #[allow(unused)]
 pub async fn get_connection_users() -> Collection<User> {
-    let adress = Cli::mongoadress().await;
+    let adress = Cli::mongo_adress().await;
     let client_options = ClientOptions::parse_async(adress)
         .await
         .expect("Ошибка подключение к базе данных");
@@ -21,7 +19,7 @@ pub async fn get_connection_users() -> Collection<User> {
 ///Создание соединения с базой данных к полям подбазе posts в базе Main
 #[allow(unused)]
 pub async fn get_connection_posts() -> Collection<Post> {
-    let adress = Cli::mongoadress().await;
+    let adress = Cli::mongo_adress().await;
     let client_options = ClientOptions::parse_async(adress)
         .await
         .expect("Ошибка подключение к базе данных");
