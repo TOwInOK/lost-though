@@ -7,3 +7,4 @@
 /test.http
 /.gitignore
 /node_modules
+/.demo.http
