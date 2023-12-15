@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,83 +11,88 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
     <script>hljs.highlightAll();</script>
 </head>
-    <body>
-        <div class="sidenav">
-            <h1 class="top_side">Scopes:</h1>
-            <a href="/about.html">About</a>
-            <a href="/user.html">User</a>
-            <a href="/post.html">Post</a>
-            <a href="/search.html">Search</a>
-        </div>
-        <div class="main">
-            <h1>Post</h1>
-            <p class="p-description">GET: /{post_id}/ - for example, /6557b9f2417e299f07b8096a</p>
-            <p>Send the id and Get the Post.</p>
-            <p class="p-description">POST: /{post_id}/edit</p>
-            <p>Send <a href="#RequsetPost">{RequsetPost}</a>.</p>
-            <p class="p-description">POST: /create</p>
-            <p>Send <a href="#RequsetPost">{RequsetPost}</a> and Get create <a href="#Post">{Post}</a>.</p>
-            <p class="p-description">POST: /page/all</p>
-            <p>Send nothing and Get all posts in bd</p>
-            <p class="p-description">POST: /page/{number}</p>
-            <p>Send number of page<br> 1 number = 10 posts<br> 2 number = 20 posts<br> end etc...</p>
-            <p class="p-description">DELETE: /{post_id}/delete</p>
-            <p>Decided not to create another Api request type.<br> Send id<br> Send <a href="#Auth">{Auth}</a><br> Get HttpResponse (we get this type
-            of message everywhere, only the json is always custom if it is implied).
-            </p>
-            <p class="p-description">Structure: RequsetPost</p>
-            <div class="row">
-            <div class="column">
-                <pre>
-                    <code id="RequsetPost" class="language-rust" style="background-color: rgb(161, 136, 187); border-radius: 16px;">
-                        pub struct RequsetPost {
-                            pub post: PostCreate,
-                            pub auth: Auth,
-                        }
-                    </code>
-                </pre>
-            </div>
-            <div class="column">
-                <pre>
-                    <code id="RequsetPost" class="language-rust" style="background-color: rgb(161, 136, 187); border-radius: 16px;">
-                        pub struct RequsetPost {
-                            pub post: PostCreate,
-                            pub auth: Auth,
-                        }
-                    </code>
-                </pre>
-            </div>
-            <div class="column">
-                <pre>
-                    <code id="Post" class="language-rust" style="background-color: rgb(161, 136, 187); border-radius: 16px;">
-                        pub struct Post {
-                            #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-                            pub id: Option<ObjectId>,
-                            pub author: Vec<String>,
-                            pub date: u64,
-                            pub underlabel: String,
-                            pub label: String,
-                            pub text: String,
-                            pub footer: String,
-                            pub tags: Vec<String>,
-                            pub comments: Vec<Comment>,
-                        }
-                    </code>
-                </pre>
-            </div>
-            <div class="column">
-                <pre>
-                    <code id="Auth" class="language-rust" style="background-color: rgb(161, 136, 187); border-radius: 16px;" >
-                        pub struct Auth {
-                            pub name: String,
-                            pub password: String,
-                        }
-                    </code>
-                </pre>
-            </div>
-            </div>
-        </div>
-    </body>
-</html>
 
- 
+<body>
+    <div class="sidenav">
+        <h1 class="top_side">Scopes:</h1>
+        <a href="/about.html">About</a>
+        <a href="/user.html">User</a>
+        <a href="/post.html">Post</a>
+        <a href="/search.html">Search</a>
+    </div>
+    <div class="main">
+        <h1>Post</h1>
+        <p class="p-description">GET: /{post_id}/ - for example, /6557b9f2417e299f07b8096a</p>
+        <p>Send the id and Get the Post.</p>
+        <p class="p-description">POST: /{post_id}/edit</p>
+        <p>Send <a href="#RequsetPost">{RequsetPost}</a>.</p>
+        <p class="p-description">POST: /create</p>
+        <p>Send <a href="#RequsetPost">{RequsetPost}</a> and Get create <a href="#Post">{Post}</a>.</p>
+        <p class="p-description">POST: /page/all</p>
+        <p>Send nothing and Get all posts in bd</p>
+        <p class="p-description">POST: /page/{number}</p>
+        <p>Send number of page<br> 1 number = 10 posts<br> 2 number = 20 posts<br> end etc...</p>
+        <p class="p-description">DELETE: /{post_id}/delete</p>
+        <p>Decided not to create another Api request type.<br> Send id<br> Send <a href="#Auth">{Auth}</a><br> Get
+            HttpResponse (we get this type
+            of message everywhere, only the json is always custom if it is implied).
+        </p>
+        <p class="p-description">Structure: RequsetPost</p>
+        <div class="row">
+            <div class="column">
+                <pre>
+                    <code id="RequsetPost" class="language-rust"
+                        style="background-color: rgb(161, 136, 187); border-radius: 16px;">
+                        pub struct RequsetPost {
+                        pub post: PostCreate,
+                        pub auth: Auth,
+                        }
+                    </code>
+                </pre>
+            </div>
+            <div class="column">
+                <pre>
+                    <code id="RequsetPost" class="language-rust"
+                        style="background-color: rgb(161, 136, 187); border-radius: 16px;">
+                        pub struct RequsetPost {
+                        pub post: PostCreate,
+                        pub auth: Auth,
+                        }
+                    </code>
+                </pre>
+            </div>
+            <div class="column">
+                <pre>
+                    <code id="Post" class="language-rust"
+                        style="background-color: rgb(161, 136, 187); border-radius: 16px;">
+                        pub struct Post {
+                        #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
+                        pub id: Option<ObjectId>,
+                            pub author: Vec<String>,
+                                pub date: u64,
+                                pub underlabel: String,
+                                pub label: String,
+                                pub text: String,
+                                pub footer: String,
+                                pub tags: Vec<String>,
+                                    pub comments: Vec<Comment>,
+                                        }
+                    </code>
+                </pre>
+            </div>
+            <div class="column">
+                <pre>
+                    <code id="Auth" class="language-rust"
+                        style="background-color: rgb(161, 136, 187); border-radius: 16px;">
+                        pub struct Auth {
+                        pub name: String,
+                        pub password: String,
+                        }
+                    </code>
+                </pre>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -5,8 +5,7 @@ body {
     background-color: #1c1c1c;
     text-align: justify;
     width: 90%;
-    display:grid;
-
+    display: grid;
 }
 p {
     font-family: Consolas;
@@ -17,7 +16,6 @@ p {
     background-color: #1c1c1c;
     text-align: left;
 }
-
 
 h1 {
     font-family: Consolas;
@@ -40,7 +38,6 @@ h2 {
     background-color: #1c1c1c;
     text-align: left;
 }
-
 
 /*code*/
 .h1 {
@@ -76,8 +73,12 @@ h2 {
     padding: 0px 10px;
 }
 @media screen and (max-height: 450px) {
-    .sidenav {padding-top: 15px;}
-    .sidenav a {font-size: 18px;}
+    .sidenav {
+        padding-top: 15px;
+    }
+    .sidenav a {
+        font-size: 18px;
+    }
 }
 /* The navigation menu links */
 .sidenav a {
@@ -86,8 +87,8 @@ h2 {
     text-decoration: none;
     font-size: 25px;
     color: #bb86fc;
-    display:flow-root;
-    text-align:center;
+    display: flow-root;
+    text-align: center;
 }
 .top_side {
     color: #03dac6;
@@ -99,11 +100,11 @@ h2 {
 }
 
 .column {
-    float:left;
+    float: left;
     width: 60%;
 }
-  
-  /* Clear floats after the columns */
+
+/* Clear floats after the columns */
 .row:after {
     content: "";
     display: table;
@@ -111,6 +112,6 @@ h2 {
 }
 @media screen and (max-width: 600px) {
     .column {
-      width: 100%;
+        width: 100%;
     }
 }
