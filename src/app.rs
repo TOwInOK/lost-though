@@ -311,12 +311,18 @@ pub async fn code_get(code: web::Path<usize>, auth: web::Json<Auth>) -> HttpResp
         return HttpResponse::BadRequest().body("Password is empty");
     }
     let collection = get_connection_users().await;
-    match user_get(collection, auth.name.to_string()).await {
+    match user_get(collection.clone(), auth.name.to_string()).await {
         Ok(v) => {
             match v {
-                Some(i) => {
+                Some(_) => {
                     match check_code(*code, auth.name.to_string().to_lowercase()).await {
-                        Ok(_) => HttpResponse::Ok().body("Code send"),
+                        Ok(_) => {
+                            match user_change_pass(&collection, auth.0).await {
+                                Ok(v) => HttpResponse::Ok().body("password changed"),
+                                Err(e) => HttpResponse::NotFound().body(e.to_string()),
+                            }
+                            
+                        },
                         Err(e) => HttpResponse::NotFound().body(e.to_string()),
                     }
                 }
