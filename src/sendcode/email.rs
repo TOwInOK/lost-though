@@ -1,11 +1,11 @@
 use crate::Cli;
-use lettre::message::header::ContentType;
-use lettre::transport::smtp::authentication::Credentials;
-use lettre::{Message, SmtpTransport, Transport};
+use lettre::{
+    message::header::ContentType, transport::smtp::authentication::Credentials, Message,
+    SmtpTransport, Transport,
+};
 use rand::random;
 use redis::Commands;
-use std::error::Error;
-use std::fmt;
+use std::{error::Error, fmt};
 
 ///get req for creat code and put it in redis
 pub async fn send_password_code(email_to: String, name: String) -> Result<(), Box<dyn Error>> {
@@ -19,7 +19,7 @@ pub async fn send_password_code(email_to: String, name: String) -> Result<(), Bo
     //check code
     let check_code: Option<u16> = con.hget(&name, "code")?;
 
-    if let Some(_) = check_code {
+    if check_code.is_some() {
         return Err(Box::new(CodeError::new("Code has already been created")));
     }
 
@@ -40,7 +40,7 @@ pub async fn send_password_code(email_to: String, name: String) -> Result<(), Bo
 
     match mailer.send(&email) {
         Ok(_) => {
-            let _: () = con.hset(&name, "code", code)?;
+            con.hset(&name, "code", code)?;
             con.expire(&name, 300)?;
             Ok(())
         }
