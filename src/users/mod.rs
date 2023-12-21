@@ -30,7 +30,7 @@ pub async fn user_create(
 ///Фильтруем пользователя по имени ```collection.find_one``` и выдаём Some(user)
 pub async fn user_get(collection: Collection<User>, name: String) -> Result<Option<User>, Error> {
     let filter = doc! {
-        "name": name
+        "name": name.to_lowercase()
     };
     match collection.find_one(filter, None).await {
         Ok(result) => {
@@ -49,6 +49,21 @@ pub async fn user_change(collection: &Collection<User>, user: User) -> Result<Up
         "$set": {
             "password": user.password,
             "email": user.email,
+        }
+    };
+    match collection.update_one(filter, update, None).await {
+        Ok(result) => Ok(result),
+        Err(e) => Err(e),
+    }
+}
+
+pub async fn user_change_pass(collection: &Collection<User>, user: Auth) -> Result<UpdateResult, Error> {
+    let filter = doc! {
+        "name": user.name
+    };
+    let update = doc! {
+        "$set": {
+            "password": user.password,
         }
     };
     match collection.update_one(filter, update, None).await {

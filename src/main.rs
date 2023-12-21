@@ -18,7 +18,7 @@ async fn main() -> std::io::Result<()> {
                     .service(user)
                     .service(postall)
                     .service(get_user_settings)
-                    .service(user_changer)
+                    .service(pass_changer)
                     .service(delete_user)
                     .service(create_user)
                     .service(code_send),

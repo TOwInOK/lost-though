@@ -4,7 +4,7 @@ use crate::users::user_get;
 use serde::{Deserialize, Serialize};
 
 //Структура приходящая от клиента, при минимальном запросе.
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone)]
 pub struct Auth {
     pub name: String,
     pub password: String,

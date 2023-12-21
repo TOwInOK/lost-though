@@ -1,5 +1,5 @@
 use actix_web::{put, delete, get, post, web, HttpRequest, HttpResponse, Responder};
-use back::{sendcode::email::send_password_code, autentifications::auth::Auth, comments::{comment_delete, comment::Comment, comment_add}, mongolinks::cget::{get_connection_posts, get_connection_users}, posts::{post::PostCreate, *}, users::{user::{User, UserMin}, *}};
+use back::{sendcode::email::{send_password_code, check_code}, autentifications::auth::Auth, comments::{comment_delete, comment::Comment, comment_add}, mongolinks::cget::{get_connection_posts, get_connection_users}, posts::{post::PostCreate, *}, users::{user::{User, UserMin}, *}};
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
@@ -71,21 +71,47 @@ pub async fn get_user_settings(name: web::Path<String>, u: web::Json<Auth>) -> H
 }
 ///Change pass
 /// req: `<String>` user name + `UserChanger`
-#[put("/{name}/changepass")]
-pub async fn user_changer(name: web::Path<String>, mut u: web::Json<UserChanger>) -> HttpResponse {
+#[put("/{name}/settings/changepass")]
+pub async fn pass_changer(name: web::Path<String>, mut auth: web::Json<UserChangerAuth>) -> HttpResponse {
     let collection = get_connection_users().await;
-    if u.user.password.is_empty() {
+    if auth.auth.password.is_empty() {
         return HttpResponse::BadRequest().body("Password is empty");
     }
-    if u.newpassword.is_empty() {
+    if auth.newpassword.is_empty() {
         return HttpResponse::BadRequest().body("New Password is empty");
     }
     match user_get(collection.clone(), name.to_string()).await {
         Ok(Some(i)) => {
-            if i.validate(&u.user) {
-                u.user.password = u.newpassword.clone();
-                match user_change(&collection, u.user.clone()).await {
+            if i.validate_anonimus(&auth.auth) {
+                auth.auth.password = auth.newpassword.clone();
+                match user_change_pass(&collection, auth.auth.clone()).await {
                     Ok(_) => HttpResponse::Ok().body("Password changed"),
+                    Err(e) => HttpResponse::BadRequest().body(e.to_string()),
+                }
+            } else {
+                HttpResponse::Forbidden().body("Wrong password")
+            }
+        }
+        Ok(None) => HttpResponse::NotFound().body("Nothing of your user found"),
+        Err(_e) => HttpResponse::BadRequest().body("This structure is't user"),
+    }
+}
+
+#[put("/{name}/settings/change")]
+pub async fn user_changer(name: web::Path<String>, mut auth: web::Json<UserChanger>) -> HttpResponse {
+    let collection = get_connection_users().await;
+    if auth.user.password.is_empty() {
+        return HttpResponse::BadRequest().body("Password is empty");
+    }
+    if auth.newpassword.is_empty() {
+        return HttpResponse::BadRequest().body("New Password is empty");
+    }
+    match user_get(collection.clone(), name.to_string()).await {
+        Ok(Some(i)) => {
+            if i.validate(&auth.user) {
+                auth.user.password = auth.newpassword.clone();
+                match user_change(&collection, auth.user.clone()).await {
+                    Ok(_) => HttpResponse::Ok().body("User changed"),
                     Err(e) => HttpResponse::BadRequest().body(e.to_string()),
                 }
             } else {
@@ -271,6 +297,30 @@ pub async fn code_send(name: web::Path<String>) -> HttpResponse {
                     }
                 }
                 None => {
+                    HttpResponse::NotFound().body("User not found")
+                }
+            }
+        },
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    }
+}
+
+#[post("/code/{code}")]
+pub async fn code_get(code: web::Path<usize>, auth: web::Json<Auth>) -> HttpResponse {
+    if auth.password.is_empty() {
+        return HttpResponse::BadRequest().body("Password is empty");
+    }
+    let collection = get_connection_users().await;
+    match user_get(collection, auth.name.to_string()).await {
+        Ok(v) => {
+            match v {
+                Some(i) => {
+                    match check_code(*code, auth.name.to_string().to_lowercase()).await {
+                        Ok(_) => HttpResponse::Ok().body("Code send"),
+                        Err(e) => HttpResponse::NotFound().body(e.to_string()),
+                    }
+                }
+                None => {
                     HttpResponse::NoContent().body("User not found")
                 }
             }
@@ -320,7 +370,13 @@ pub struct RequsetPost {
     pub auth: Auth,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct UserChangerAuth {
+    pub auth: Auth,
+    pub newpassword: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UserChanger {
     pub user: User,
     pub newpassword: String,
