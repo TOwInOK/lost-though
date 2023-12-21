@@ -11,6 +11,7 @@
         />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
+        <script src="https://unpkg.com/htmx.org@1.9.9"></script>
         <script>
             hljs.highlightAll();
         </script>
@@ -25,19 +26,41 @@
         </div>
         <div class="main">
             <h1 id="Username">User</h1>
-            <p class="p-description">Post: /{username}</p>
+            <p class="p-description">
+                Post: /{username} | 
+                <a href="https://api.lost-umbrella.com/" 
+                   hx-trigger="click" 
+                   hx-get="/user/example_user" 
+                   hx-swap="afterend">
+                   Example
+                </a>
+              </p>
             <p>
                 Use the <a href="#Username">{username}</a> in the path to
-                retrieve the "UserMin" structure.
+                retrieve the <a href="#UserMin">{UserMin}</a> structure.
             </p>
-            <p class="p-description">GET: /{username}/posts</p>
+
+            <p class="p-description">GET: /{username}/posts |
+                <a href="https://api.lost-umbrella.com/" 
+                   hx-trigger="click" 
+                   hx-get="/user/example_user/posts" 
+                   hx-swap="afterend">
+                   Example
+                </a>
+            </p>
             <p>Get all posts by the <a href="#Username">{username}</a>.</p>
             <p class="p-description">GET: /{username}/settings</p>
             <p>
-                Using the Auth structure to get user data in the form of the
+                Using the <a href="#UserMin">{Auth}</a> structure to get user data in the form of the
                 User structure for further use.
             </p>
-            <p class="p-description">POST: /{username}/changepass</p>
+            <p class="p-description">POST: /{username}/settings/changepass</p>
+            <p>
+                Send the <a href="#UserChangerAuth">{UserChangerAuth}</a> and
+                <a href="#Username">{username}</a> structure for change account
+                password.
+            </p>
+            <p class="p-description">POST: /{username}/settings/change</p>
             <p>
                 Send the <a href="#UserChanger">{UserChanger}</a> and
                 <a href="#Username">{username}</a> structure for change account
@@ -51,6 +74,14 @@
             <p class="p-description">POST: /create</p>
             <p>
                 Create the user using the <a href="#User">{User}</a> structure.
+            </p>
+            <p class="p-description">GET: /code/{name}</p>
+            <p>
+                Send <a href="#Username">{username}</a> for cend code to email (at once 5 min).
+            </p>
+            <p class="p-description">POST: /code/{code}</p>
+            <p>
+                Send code for recover password and take response.
             </p>
             <p class="p-description">
                 Structures: User, UserMin, UserChanger, Auth
@@ -91,6 +122,16 @@
                         </code>
                     </pre>
                 </div>
+                <div id="UserChangerAuth" class="column">
+                    <pre>
+                        <code class="language-rust" style="background-color: rgb(161, 136, 187); border-radius: 16px;" >
+                            pub struct UserChangerAuth {
+                                pub auth: Auth,
+                                pub newpassword: String,
+                            }
+                        </code>
+                    </pre>
+                </div>
                 <div id="UserChanger" class="column">
                     <pre>
                         <code class="language-rust" style="background-color: rgb(161, 136, 187); border-radius: 16px;" >
@@ -101,7 +142,23 @@
                         </code>
                     </pre>
                 </div>
+                
             </div>
+            <form id="userForm" hx-trigger="submit" hx-post="/user/settings" hx-swap="outerHTML">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+              
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+              
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+              
+                <button type="submit">Submit</button>
+              </form>
+        
+            <!-- Место для отображения результата запроса -->
+            <div id="result" hx-target="#result" hx-swap="innerHTML"></div>
         </div>
     </body>
 </html>
