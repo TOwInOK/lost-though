@@ -3,6 +3,7 @@ use lettre::message::header::ContentType;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
 use rand::random;
+use redis::Commands;
 use std::error::Error;
 use std::fmt;
 
@@ -14,13 +15,14 @@ pub async fn send_password_code(email_to: String, name: String) -> Result<(), Bo
     let mut con = client.get_connection()?;
     let login: String = Cli::smtp_login().await;
     let password: String = Cli::smtp_password().await;
-    let check_code: String = redis::cmd("GET")
-        .arg(name.clone())
-        .query(&mut con)
-        .expect("Redis DataBase error");
-    if !check_code.is_empty() {
-        return Err(Box::new(CodeError::new("code has already created")));
+
+    //check code
+    let check_code: Option<u16> = con.hget(&name, "code")?;
+
+    if let Some(_) = check_code {
+        return Err(Box::new(CodeError::new("Code has already been created")));
     }
+
     let email = Message::builder()
         .from("monotipe. <TOwInOK@nothub.ru>".parse().unwrap())
         .to(email_to.parse().unwrap())
@@ -38,13 +40,8 @@ pub async fn send_password_code(email_to: String, name: String) -> Result<(), Bo
 
     match mailer.send(&email) {
         Ok(_) => {
-            let _: () = redis::cmd("SET")
-                .arg(name)
-                .arg(code)
-                .arg("EX")
-                .arg(300)
-                .query(&mut con)
-                .expect("Redis DataBase error");
+            let _: () = con.hset(&name, "code", code)?;
+            con.expire(&name, 300)?;
             Ok(())
         }
         Err(e) => Err(Box::new(e)),

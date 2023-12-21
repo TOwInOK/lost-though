@@ -155,7 +155,7 @@ impl Cli {
     }
     pub async fn redis_adress_simple() -> String {
         let cli = Cli::parse();
-        let output = format!("redis://{}:{}", cli.redis_adress, cli.redis_port);
+        let output = format!("redis://{}/", cli.redis_adress);
         output
     }
     pub async fn smtp_login() -> String {
