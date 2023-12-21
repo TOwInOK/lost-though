@@ -1,7 +1,12 @@
 pub mod comment;
 use crate::posts::post::Post;
 use comment::Comment;
-use mongodb::{bson::{doc, oid::ObjectId, to_document}, results::{UpdateResult, DeleteResult}, Collection, options::DeleteOptions};
+use mongodb::{
+    bson::{doc, oid::ObjectId, to_document},
+    options::DeleteOptions,
+    results::{DeleteResult, UpdateResult},
+    Collection,
+};
 use std::error::Error;
 
 ///Добавляем комментарии к посту
@@ -31,7 +36,7 @@ pub async fn comment_delete(
 ) -> Result<DeleteResult, Box<dyn Error>> {
     let filter = doc! {
         "_id": post_id,
-        "author": validated_username,        
+        "author": validated_username,
     };
     match collection
         .delete_one(filter, DeleteOptions::builder().build())
@@ -39,6 +44,5 @@ pub async fn comment_delete(
     {
         Ok(v) => Ok(v),
         Err(e) => Err(Box::new(e)),
-    
     }
 }

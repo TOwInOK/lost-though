@@ -1,10 +1,16 @@
 pub mod post;
 
+use self::post::PostCreate;
 use chrono::Utc;
 use futures::StreamExt;
-use mongodb::{bson::{doc, oid::ObjectId}, error::Error, options::{DeleteOptions, UpdateOptions, FindOptions}, results::{DeleteResult, InsertOneResult, UpdateResult}, Collection};
+use mongodb::{
+    bson::{doc, oid::ObjectId},
+    error::Error,
+    options::{DeleteOptions, FindOptions, UpdateOptions},
+    results::{DeleteResult, InsertOneResult, UpdateResult},
+    Collection,
+};
 use post::Post;
-use self::post::PostCreate;
 
 ///Создание поста
 pub async fn post_create(
@@ -20,7 +26,7 @@ pub async fn post_create(
         footer: post.footer,
         tags: post.tags,
         comments: vec![],
-        date: Utc::now().timestamp_millis() as u64
+        date: Utc::now().timestamp_millis() as u64,
     };
     match collection.insert_one(post, None).await {
         Ok(result) => Ok(result),
@@ -52,7 +58,6 @@ pub async fn post_edit(
         .await
         .map_err(|e| e.into())
 }
-
 
 ///Удаление поста
 pub async fn post_delete(
@@ -133,17 +138,14 @@ pub async fn post_get_page(
         0 => 0,
         1 => 0,
         _ => (page - 1) * 10,
-        
     };
     let limitrange = (skiprange + 10) as i64;
-        
+
     let options = mongodb::options::FindOptions::builder()
-    .skip(skiprange as u64)
-    .limit(limitrange)
-    .build();
-    let mut cursor = collection
-        .find(doc! {}, options)
-        .await?;
+        .skip(skiprange as u64)
+        .limit(limitrange)
+        .build();
+    let mut cursor = collection.find(doc! {}, options).await?;
     // Используем `StreamExt` для асинхронного перебора результатов
     let mut posts = Vec::new();
     while let Some(post) = cursor.next().await {
@@ -171,13 +173,13 @@ pub async fn post_search_vague(
         .map(|s| s.to_string())
         .collect::<Vec<String>>();
     let filter = doc! {
-        "$or": [
-            { "label": { "$regex": search_string.join("|"), "$options": "i" } },
-            { "underlabel": { "$regex": search_string.join("|"), "$options": "i" } },
-            { "text": { "$regex": search_string.join("|"), "$options": "i" } },
-            { "footer": { "$regex": search_string.join("|"), "$options": "i" } },
-        ]
-     };
+       "$or": [
+           { "label": { "$regex": search_string.join("|"), "$options": "i" } },
+           { "underlabel": { "$regex": search_string.join("|"), "$options": "i" } },
+           { "text": { "$regex": search_string.join("|"), "$options": "i" } },
+           { "footer": { "$regex": search_string.join("|"), "$options": "i" } },
+       ]
+    };
     let mut cursor = collection
         .find(filter, FindOptions::builder().build())
         .await?;
@@ -232,7 +234,6 @@ pub async fn post_search_vague_page(
         0 => 0,
         1 => 0,
         _ => (page - 1) * 10,
-        
     };
     let limitrange = (skiprange + 10) as i64;
     //разделение строки на подстроки
@@ -252,9 +253,7 @@ pub async fn post_search_vague_page(
         .skip(skiprange as u64)
         .limit(limitrange)
         .build();
-    let mut cursor = collection
-        .find(filter, options)
-        .await?;
+    let mut cursor = collection.find(filter, options).await?;
     // Используем `StreamExt` для асинхронного перебора результатов
     let mut posts = Vec::new();
     while let Some(post) = cursor.next().await {
@@ -280,19 +279,16 @@ pub async fn post_search_fair_page(
         0 => 0,
         1 => 0,
         _ => (page - 1) * 10,
-        
     };
     let limitrange = (skiprange + 10) as i64;
     let filter = doc! {
         "$text": { "$search": search_string }
     };
     let options = mongodb::options::FindOptions::builder()
-    .skip(skiprange as u64)
-    .limit(limitrange)
-    .build();
-    let mut cursor = collection
-        .find(filter, options)
-        .await?;
+        .skip(skiprange as u64)
+        .limit(limitrange)
+        .build();
+    let mut cursor = collection.find(filter, options).await?;
     // Используем `StreamExt` для асинхронного перебора результатов
     let mut posts = Vec::new();
     while let Some(post) = cursor.next().await {

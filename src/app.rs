@@ -1,9 +1,19 @@
-use actix_web::{put, delete, get, post, web, HttpRequest, HttpResponse, Responder};
-use back::{sendcode::email::{send_password_code, check_code}, autentifications::auth::Auth, comments::{comment_delete, comment::Comment, comment_add}, mongolinks::cget::{get_connection_posts, get_connection_users}, posts::{post::PostCreate, *}, users::{user::{User, UserMin}, *}};
+use actix_files as fs;
+use actix_web::{delete, get, post, put, web, HttpRequest, HttpResponse, Responder};
+use back::{
+    autentifications::auth::Auth,
+    comments::{comment::Comment, comment_add, comment_delete},
+    mongolinks::cget::{get_connection_posts, get_connection_users},
+    posts::{post::PostCreate, *},
+    sendcode::email::{check_code, send_password_code},
+    users::{
+        user::{User, UserMin},
+        *,
+    },
+};
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use actix_files as fs;
 
 const INDEX_HTML: &str = "static/about.html";
 ///Main doc page
@@ -72,7 +82,10 @@ pub async fn get_user_settings(name: web::Path<String>, u: web::Json<Auth>) -> H
 ///Change pass
 /// req: `<String>` user name + `UserChanger`
 #[put("/{name}/settings/changepass")]
-pub async fn pass_changer(name: web::Path<String>, mut auth: web::Json<UserChangerAuth>) -> HttpResponse {
+pub async fn pass_changer(
+    name: web::Path<String>,
+    mut auth: web::Json<UserChangerAuth>,
+) -> HttpResponse {
     let collection = get_connection_users().await;
     if auth.auth.password.is_empty() {
         return HttpResponse::BadRequest().body("Password is empty");
@@ -98,7 +111,10 @@ pub async fn pass_changer(name: web::Path<String>, mut auth: web::Json<UserChang
 }
 
 #[put("/{name}/settings/change")]
-pub async fn user_changer(name: web::Path<String>, mut auth: web::Json<UserChanger>) -> HttpResponse {
+pub async fn user_changer(
+    name: web::Path<String>,
+    mut auth: web::Json<UserChanger>,
+) -> HttpResponse {
     let collection = get_connection_users().await;
     if auth.user.password.is_empty() {
         return HttpResponse::BadRequest().body("Password is empty");
@@ -288,18 +304,14 @@ pub async fn search_fair_scope_pages(req: HttpRequest) -> HttpResponse {
 pub async fn code_send(name: web::Path<String>) -> HttpResponse {
     let collection = get_connection_users().await;
     match user_get(collection, name.to_string()).await {
-        Ok(v) => {
-            match v {
-                Some(i) => {
-                    match send_password_code(i.email, name.clone().to_string().to_lowercase()).await {
-                        Ok(_) => HttpResponse::Ok().body("Code send"),
-                        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
-                    }
-                }
-                None => {
-                    HttpResponse::NotFound().body("User not found")
+        Ok(v) => match v {
+            Some(i) => {
+                match send_password_code(i.email, name.clone().to_string().to_lowercase()).await {
+                    Ok(_) => HttpResponse::Ok().body("Code send"),
+                    Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
                 }
             }
+            None => HttpResponse::NotFound().body("User not found"),
         },
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
@@ -312,24 +324,15 @@ pub async fn code_get(code: web::Path<usize>, auth: web::Json<Auth>) -> HttpResp
     }
     let collection = get_connection_users().await;
     match user_get(collection.clone(), auth.name.to_string()).await {
-        Ok(v) => {
-            match v {
-                Some(_) => {
-                    match check_code(*code, auth.name.to_string().to_lowercase()).await {
-                        Ok(_) => {
-                            match user_change_pass(&collection, auth.0).await {
-                                Ok(v) => HttpResponse::Ok().body("password changed"),
-                                Err(e) => HttpResponse::NotFound().body(e.to_string()),
-                            }
-                            
-                        },
-                        Err(e) => HttpResponse::NotFound().body(e.to_string()),
-                    }
-                }
-                None => {
-                    HttpResponse::NoContent().body("User not found")
-                }
-            }
+        Ok(v) => match v {
+            Some(_) => match check_code(*code, auth.name.to_string().to_lowercase()).await {
+                Ok(_) => match user_change_pass(&collection, auth.0).await {
+                    Ok(_) => HttpResponse::Ok().body("password changed"),
+                    Err(e) => HttpResponse::NotFound().body(e.to_string()),
+                },
+                Err(e) => HttpResponse::NotFound().body(e.to_string()),
+            },
+            None => HttpResponse::NoContent().body("User not found"),
         },
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }

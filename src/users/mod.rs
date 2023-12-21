@@ -1,8 +1,14 @@
 pub mod user;
-use crate::{autentifications::auth::Auth, posts::post::Post};
-use mongodb::{bson::doc, error::Error, options::DeleteOptions, results::{DeleteResult, InsertOneResult, UpdateResult}, Collection};
-use crate::User;
 use crate::Role;
+use crate::User;
+use crate::{autentifications::auth::Auth, posts::post::Post};
+use mongodb::{
+    bson::doc,
+    error::Error,
+    options::DeleteOptions,
+    results::{DeleteResult, InsertOneResult, UpdateResult},
+    Collection,
+};
 ///Выдаём пользователя;
 ///сравнивая его по имени;
 ///если пользователь есть, то выводим ошибку,
@@ -35,8 +41,8 @@ pub async fn user_get(collection: Collection<User>, name: String) -> Result<Opti
     match collection.find_one(filter, None).await {
         Ok(result) => {
             eprintln!("{:#?}", result);
-            Ok(result)}
-            ,
+            Ok(result)
+        }
         Err(e) => Err(e),
     }
 }
@@ -57,7 +63,10 @@ pub async fn user_change(collection: &Collection<User>, user: User) -> Result<Up
     }
 }
 
-pub async fn user_change_pass(collection: &Collection<User>, user: Auth) -> Result<UpdateResult, Error> {
+pub async fn user_change_pass(
+    collection: &Collection<User>,
+    user: Auth,
+) -> Result<UpdateResult, Error> {
     let filter = doc! {
         "name": user.name
     };

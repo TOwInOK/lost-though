@@ -2,8 +2,8 @@ pub mod autentifications;
 pub mod comments;
 pub mod mongolinks;
 pub mod posts;
-pub mod users;
 pub mod sendcode;
+pub mod users;
 use crate::users::user::Role;
 use crate::users::user::User;
 use clap::Parser;
@@ -121,7 +121,6 @@ pub struct Cli {
     /// adress smpt
     #[arg(long = "smtp-adress")]
     smtp_adress: String,
-
 }
 
 impl Cli {
@@ -156,11 +155,7 @@ impl Cli {
     }
     pub async fn redis_adress_simple() -> String {
         let cli = Cli::parse();
-        let output = format!(
-            "redis://{}:{}",
-            cli.redis_adress,
-            cli.redis_port
-        );
+        let output = format!("redis://{}:{}", cli.redis_adress, cli.redis_port);
         output
     }
     pub async fn smtp_login() -> String {
