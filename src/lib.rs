@@ -106,7 +106,7 @@ pub struct Cli {
     #[arg(long = "redis-password")]
     redis_password: Option<String>,
     ///Port for redis
-    #[arg(long = "redis-port", default_value_t = 6380)]
+    #[arg(long = "redis-port", default_value_t = 6379)]
     redis_port: u16,
     #[arg(long = "redis-adress", default_value_t = format!("127.0.0.1"))]
     redis_adress: String,
