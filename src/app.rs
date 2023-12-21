@@ -179,7 +179,7 @@ pub async fn post(post_id: web::Path<String>) -> HttpResponse {
 }
 ///Редактируем пост отправляя запрос.
 ///Заменть на сегментарное редактирование.
-#[post("/{post}/edit")]
+#[put("/edit")]
 pub async fn post_editor(p: web::Json<RequsetPost>) -> HttpResponse {
     let collection = get_connection_posts().await;
     if p.0.auth.validate().await {

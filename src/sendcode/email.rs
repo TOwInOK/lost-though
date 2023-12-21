@@ -53,14 +53,14 @@ pub async fn check_code(code: usize, name: String) -> Result<(), Box<dyn Error>>
     let connection = Cli::redis_adress_simple().await;
     let client = redis::Client::open(connection)?;
     let mut con = client.get_connection()?;
-    let code2: String = redis::cmd("GET")
-        .arg(name)
-        .query(&mut con)
-        .expect("Redis DataBase error");
-    if code2 == code.to_string() {
-        Ok(())
-    } else {
-        Err(Box::new(CodeError::new("code is't same")))
+    let check_code: Option<u16> = con.hget(&name, "code")?;
+    match check_code {
+        Some(saved_code) if saved_code == code as u16 => {
+            // Код совпал, удаляем его из Redis hash
+            let _: () = con.del(&name)?;
+            Ok(())
+        }
+        _ => Err(Box::new(CodeError::new("Code doesn't match"))),
     }
 }
 
