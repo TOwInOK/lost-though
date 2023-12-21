@@ -265,7 +265,7 @@ pub async fn code_send(name: web::Path<String>) -> HttpResponse {
         Ok(v) => {
             match v {
                 Some(i) => {
-                    match send_password_code(i.email).await {
+                    match send_password_code(i.email, name.clone().to_string().to_lowercase()).await {
                         Ok(_) => HttpResponse::Ok().body("Code send"),
                         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
                     }

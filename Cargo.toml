@@ -19,4 +19,5 @@ actix-web-httpauth = "0.8.1"
 clap = { version = "4.4.11", features = ["derive"] }
 lettre = { version = "0.11.2", features = ["serde"] }
 actix-files = { version = "0.6.2", features = ["tokio-uring"] }
+redis = { version = "0.24.0", features = ["tokio-comp"] }
 
