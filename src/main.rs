@@ -19,9 +19,11 @@ async fn main() -> std::io::Result<()> {
                     .service(postall)
                     .service(get_user_settings)
                     .service(pass_changer)
+                    .service(user_changer)
                     .service(delete_user)
                     .service(create_user)
-                    .service(code_send),
+                    .service(code_send)
+                    .service(code_get),
             )
             .service(
                 web::scope("/post")
