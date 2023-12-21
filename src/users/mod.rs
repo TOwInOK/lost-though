@@ -1,15 +1,8 @@
 pub mod user;
-use crate::autentifications::auth::Auth;
-use crate::posts::post::Post;
-use mongodb::bson::doc;
-use mongodb::error::Error;
-use mongodb::options::DeleteOptions;
-use mongodb::results::{DeleteResult, InsertOneResult, UpdateResult};
-use mongodb::Collection;
-use user::User;
-
-use self::user::Role;
-
+use crate::{autentifications::auth::Auth, posts::post::Post};
+use mongodb::{bson::doc, error::Error, options::DeleteOptions, results::{DeleteResult, InsertOneResult, UpdateResult}, Collection};
+use crate::User;
+use crate::Role;
 ///Выдаём пользователя;
 ///сравнивая его по имени;
 ///если пользователь есть, то выводим ошибку,
@@ -35,7 +28,7 @@ pub async fn user_create(
     }
 }
 ///Фильтруем пользователя по имени ```collection.find_one``` и выдаём Some(user)
-pub async fn user_get(collection: &Collection<User>, name: &String) -> Result<Option<User>, Error> {
+pub async fn user_get(collection: Collection<User>, name: String) -> Result<Option<User>, Error> {
     let filter = doc! {
         "name": name
     };

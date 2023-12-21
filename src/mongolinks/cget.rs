@@ -1,5 +1,5 @@
 use crate::posts::post::Post;
-use crate::user::user::User;
+use crate::users::user::User;
 use crate::Cli;
 use mongodb::{options::ClientOptions, Client, Collection};
 

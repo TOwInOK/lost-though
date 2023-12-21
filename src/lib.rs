@@ -2,10 +2,10 @@ pub mod autentifications;
 pub mod comments;
 pub mod mongolinks;
 pub mod posts;
-pub mod user;
+pub mod users;
 pub mod sendcode;
-use crate::user::user::Role;
-use crate::user::user::User;
+use crate::users::user::Role;
+use crate::users::user::User;
 use clap::Parser;
 use mongodb::bson::doc;
 use mongodb::error::Error;
@@ -84,8 +84,7 @@ pub struct Cli {
     ///WEB PORT
     #[arg(short = 'p', long = "port", default_value_t = 8080)]
     web_port: u16,
-
-    ////MongoDB
+    ///MongoDB
     ///Adress for mongo db
     #[arg(short = 'a', long = "mongo-adress", default_value_t = format!("127.0.0.1"))]
     mongo_adress: String,
@@ -127,8 +126,7 @@ pub struct Cli {
 
 impl Cli {
     pub async fn push() -> Self {
-        let cli = Cli::parse();
-        cli
+        Cli::parse()
     }
     pub async fn mongo_adress() -> String {
         let cli = Cli::parse();

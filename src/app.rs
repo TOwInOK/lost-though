@@ -1,33 +1,23 @@
-use actix_web::put;
-use actix_web::{delete, get, post, web, HttpRequest, HttpResponse, Responder};
-use back::autentifications::auth::Auth;
-use back::comments::comment_delete;
-use back::comments::{comment::Comment, comment_add};
-use back::mongolinks::cget::{get_connection_posts, get_connection_users};
-use back::posts::post::PostCreate;
-use back::posts::*;
-use back::user::user::{User, UserMin};
-use back::user::*;
+use actix_web::{put, delete, get, post, web, HttpRequest, HttpResponse, Responder};
+use back::{sendcode::email::send_password_code, autentifications::auth::Auth, comments::{comment_delete, comment::Comment, comment_add}, mongolinks::cget::{get_connection_posts, get_connection_users}, posts::{post::PostCreate, *}, users::{user::{User, UserMin}, *}};
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use back::sendcode::email::send_password_code;
 use actix_files as fs;
 
-
-
+const INDEX_HTML: &str = "static/about.html";
+///Main doc page
 #[get("/")]
 async fn index() -> impl Responder {
-    let path = "static/about.html";
-    let file = fs::NamedFile::open_async(path).await;
-    file
+    fs::NamedFile::open_async(INDEX_HTML).await
 }
+///Doc page
 #[get("/{path:.*\\.(html|css|js)}")]
 async fn indexx(path: web::Path<String>) -> actix_web::Result<fs::NamedFile> {
     let path = format!("static/{}", path);
     Ok(fs::NamedFile::open(path)?)
 }
-///создание пользователя
+///создание пользователя | crate the user by `<User>`
 #[post("/create")]
 pub async fn create_user(u: web::Json<User>) -> HttpResponse {
     let collection = get_connection_users().await;
@@ -42,11 +32,11 @@ pub async fn create_user(u: web::Json<User>) -> HttpResponse {
         }
     }
 }
-///инфа о пользователе
+///инфа о пользователе | get info by name of user
 #[get("/{name}")]
 pub async fn user(name: web::Path<String>) -> HttpResponse {
     let collection = get_connection_users().await;
-    match user_get(&collection, &name.to_string()).await {
+    match user_get(collection, name.to_string()).await {
         Ok(Some(user)) => {
             let anonymus_user = UserMin {
                 name: user.name.clone(),
@@ -62,13 +52,12 @@ pub async fn user(name: web::Path<String>) -> HttpResponse {
         Err(e) => HttpResponse::BadRequest().body(e.to_string()),
     }
 }
-///получение инфы о пользователе - вся котороя может быть в User
-/// так же подходит для входа :)
-///нужен пароль
+///Get all user info by name + Auth
+///Also you can auth throw this path
 #[get("/{name}/settings")]
 pub async fn get_user_settings(name: web::Path<String>, u: web::Json<Auth>) -> HttpResponse {
     let collection = get_connection_users().await;
-    match user_get(&collection, &name).await {
+    match user_get(collection, name.to_string()).await {
         Ok(Some(i)) => {
             if i.validate_anonimus(&u) {
                 HttpResponse::Ok().json(i)
@@ -80,8 +69,8 @@ pub async fn get_user_settings(name: web::Path<String>, u: web::Json<Auth>) -> H
         Err(e) => HttpResponse::BadRequest().body(e.to_string()),
     }
 }
-///Меняем пароль отправляя пользователя
-///нужен пароль
+///Change pass
+/// req: `<String>` user name + `UserChanger`
 #[put("/{name}/changepass")]
 pub async fn user_changer(name: web::Path<String>, mut u: web::Json<UserChanger>) -> HttpResponse {
     let collection = get_connection_users().await;
@@ -91,7 +80,7 @@ pub async fn user_changer(name: web::Path<String>, mut u: web::Json<UserChanger>
     if u.newpassword.is_empty() {
         return HttpResponse::BadRequest().body("New Password is empty");
     }
-    match user_get(&collection, &name).await {
+    match user_get(collection.clone(), name.to_string()).await {
         Ok(Some(i)) => {
             if i.validate(&u.user) {
                 u.user.password = u.newpassword.clone();
@@ -258,25 +247,40 @@ pub async fn search_fair_scope_pages(req: HttpRequest) -> HttpResponse {
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
 }
-#[get("/code/{name}")]
-pub async fn get_code(name: web::Path<String>) -> HttpResponse {
-    let collection = get_connection_users().await;
-    // match code_send(collection, name.to_string()).await {
-    //     Ok(_) => HttpResponse::Ok().json("Code send"),
-    //     Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
-    // }
-    todo!()
-}
+// #[get("/code/{name}")]
+// pub async fn get_code(name: web::Path<String>) -> HttpResponse {
+//     let collection = get_connection_users().await;
+//     match code_send(collection, name.to_string()).await {
+//         Ok(_) => HttpResponse::Ok().json("Code send"),
+//         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+//     }
+// }
 
-#[get("/code/test")]
-pub async fn code_send() -> HttpResponse {
-    let to = "nqcq@tuta.io".to_string();
-    match send_password_code(to).await {
-        Ok(_) => HttpResponse::Ok().body("Code send"),
+///Send code to change pasword.
+/// req `<String>` (name of user)
+#[get("/code/{name}")]
+pub async fn code_send(name: web::Path<String>) -> HttpResponse {
+    let collection = get_connection_users().await;
+    match user_get(collection, name.to_string()).await {
+        Ok(v) => {
+            match v {
+                Some(i) => {
+                    match send_password_code(i.email).await {
+                        Ok(_) => HttpResponse::Ok().body("Code send"),
+                        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+                    }
+                }
+                None => {
+                    HttpResponse::NoContent().body("User not found")
+                }
+            }
+        },
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
 }
 
+/// [Error] Добавить Auth!
+///Add some comments into current `post_id` (post).
 #[post("{post}/comment/add")]
 pub async fn add_comment(post_id: web::Path<String>, comment: web::Json<Comment>) -> HttpResponse {
     let collection = get_connection_posts().await;
@@ -290,6 +294,8 @@ pub async fn add_comment(post_id: web::Path<String>, comment: web::Json<Comment>
     }
 }
 
+///Delete post
+/// with `PostId <String>` + `<Auth>`
 #[delete("{post}/comment/delete")]
 pub async fn delete_comment(post_id: web::Path<String>, auth: web::Json<Auth>) -> HttpResponse {
     let collection = get_connection_posts().await;
@@ -319,228 +325,3 @@ pub struct UserChanger {
     pub user: User,
     pub newpassword: String,
 }
-
-const HTML: &str = r#"
-<!DOCTYPE html>
-<html>
-<head>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-dark.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-json.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            margin: 20px;
-            background-color: #1c1c1c;
-            color: #e0e0e0;
-        }
-
-        h1 {
-            color: #bb86fc;
-        }
-
-        h2 {
-            color: #03dac6;
-        }
-
-        h3 {
-            color: #03dac6;
-        }
-
-        h4 {
-            color: #03dac6;
-        }
-
-        p {
-            color: #bdbdbd;
-        }
-
-        code {
-            background-color: #282a36;
-            border: 1px solid #44475a;
-            border-radius: 4px;
-            display: block;
-            margin: 10px 0;
-            padding: 10px;
-        }
-
-        pre {
-            background-color: #282a36;
-            border: 1px solid #44475a;
-            border-radius: 4px;
-            display: block;
-            margin: 10px 0;
-            padding: 10px;
-            overflow: auto;
-        }
-    </style>
-</head>
-
-<body>
-    <h1>Api response and request of <code>api.lost-umbrella.com</code></h1>
-
-    <h2>Scopes:</h2>
-
-    <h3>/user</h3>
-
-    <h4>Post: /&lt;name&gt; - for example, /anton</h4>
-    <p>Use the USERNAME in the path to retrieve the UserMin structure.</p>
-
-    <h4>GET: /&lt;name&gt;/posts</h4>
-    <p>Get all posts by the USERNAME.</p>
-
-    <h4>GET: /{name}/settings</h4>
-    <p>Using the Auth structure to get user data in the form of the User structure for further use.</p>
-
-    <h4>POST: /{name}/changepass</h4>
-    <p>Requires a saved User structure for modification.</p>
-
-    <h4>DELETE: /delete</h4>
-    <p>Send the Auth structure.</p>
-
-    <h4>POST: /create</h4>
-    <p>Create a user using the User structure.</p>
-
-    <pre>
-      <code class="language-json">
-        UserMin
-        {
-            "name": "xxx",
-            "role": "default"
-        }
-
-        Auth
-        {
-            "name": "xxx",
-            "password": "super_puper_password228"
-        }
-
-        User
-        {
-            "name": "xxx",
-            "password": "super_puper_password228",
-            "email": "xxx@xxx.x",
-            "role": "default"
-        }
-      </code>
-    </pre>
-
-    <h3>/post</h3>
-
-    <h4>GET: /&lt;post_id&gt; - for example, /6557b9f2417e299f07b8096a</h4>
-    <p>Send the id<br> Get the Post.</p>
-
-    <h4>POST: /&lt;post_id&gt;/edit</h4>
-    <p>Send RequsetPost (id not required).</p>
-
-    <h4>POST: /create</h4>
-    <p>Send RequsetPost<br> Get Post.</p>
-
-
-    <h4>POST: /page/all</h4>
-
-    <p>Send nothing<br> Get all posts in bd ;)</p>
-
-    <h4>POST: /page/{number}</h4>
-
-    <p>Send number of page<br> 1 number = 10 posts<br> 2 number = 20 posts<br> end etc...</p>
-
-    <h4>DELETE: /&lt;post&gt;/delete</h4>
-    <p>Decided not to create another Api request type.<br> Send id<br> Send Auth<br> Get HttpResponse (we get this type
-        of message everywhere, only the json is always custom if it is implied).</p>
-
-    <pre>
-      <code class="language-json">
-        RequsetPost (id not specified)
-        {
-          "post": {
-            "author": ["author_name1", "author_name2"],
-            "underlabel": "underlabel_value",
-            "label": "label_value",
-            "text": "text_value",
-            "footer": "footer_value",
-            "tags": ["tag1", "tag2"]
-          },
-          "auth": {
-            "name": "example_user",
-            "password": "example_password"
-          }
-        }
-
-        Response from /create:
-        {
-          "insertedId": {
-            "$oid": "656387b65691e07a9f22cffd"
-          }
-        }
-
-        //We get a response from MongoDB directly, along with its errors.
-
-        Auth
-        {
-          "name": "xxx",
-          "password": "super_puper_password228"
-        }
-
-        Post (Example) - what we get
-        {
-          "_id": {
-            "$oid": "6557c5d77a925f835493442d"
-          },
-          "author": [
-            "test21fd"
-          ],
-          "date": 1700251094838,
-          "underlabel": "Example Underlabel",
-          "label": "Example Label",
-          "text": "Example Text",
-          "footer": "Example Footer",
-          "tags": [
-            "Tag1",
-            "Tag2"
-          ],
-          "comments": []
-        }
-      </code>
-    </pre>
-
-    <pre>
-      <code class="language-json">
-        comment - for now, you can't send it
-        when there is no response
-        {
-          "author": "comment_author_name",
-          "text": "comment_text",
-          "reject": null
-        }
-        when there is a response (reject is still being worked on)
-        {
-          "author": "comment_author_name",
-          "text": "comment_text",
-          "reject": {
-            "$oid": "6557c5d77a925f835493442d"
-          }
-        }
-      </code>
-    </pre>
-
-    <h2>/search</h2>
-
-    <h4>GET: /vague/{text}</h4>
-
-    <p>Send text<br> Getting posts with vague searches</p>
-
-    <h4>GET: /fair/{text}</h4>
-    <p>Send text<br> Getting posts with accurate searches</p>
-
-    <h4>GET: /vague/{text}/{number of page}</h4>
-    <p>Send text<br> Send number of page<br> Getting posts with vague searches<br> 0 = 10 too<br> 1 number = 10 posts</p>
-
-    <h4>GET: /fair/{text}/{number of page}</h4>
-    <p>Send text<br> Send number of page<br> Getting posts with accurate searches<br> 0 = 10 too<br> 1 number = 10 posts</p>
-
-
-</body>
-
-</html>
-"#;
