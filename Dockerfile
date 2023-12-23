@@ -1,5 +1,5 @@
 #Build Stage
-FROM rust:latest as builder
+FROM rust as builder
 
 #TEMP DIR
 WORKDIR /app
@@ -11,11 +11,13 @@ COPY ./src ./src
 RUN cargo build --release --verbose
 
 # Final Stage
-FROM debian:stable-slim
+FROM alpine:latest
 
-RUN apt-get update
-RUN apt-get install libssl3
-
+#Update and add some dependencies
+RUN apk update && apk upgrade && \
+    apk add \
+    openssl-dev\
+    ca-certificates
 #ARGS
 ARG mongo_address=mongo
 ARG redis_address=redis
@@ -29,7 +31,8 @@ ARG password_mongo=example
 ARG smtp_login
 ARG smtp_password
 ARG smtp_address
-
+#trace, info, error, debug
+ARG RUST_LOG=info 
 
 
 #MAIN_WEB_PORT
@@ -39,6 +42,7 @@ EXPOSE 8080
 ENV MONGO_ADDRESS $mongo_address
 ENV MONGO_LOGIN $login_mongo
 ENV MONGO_PASSWORD $password_mongo
+ENV RUST_LOG $RUST_LOG
 
 ENV REDIS_ADDRESS $redis_address
 ENV REDIS_LOGIN $login_redis

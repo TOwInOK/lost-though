@@ -3,17 +3,18 @@ use std::env;
 use actix_web::{middleware::NormalizePath, web, App, HttpServer};
 use app::*;
 use back::Cli;
-use env_logger::Env;
-use log::info;
+use log::{info, error};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let web_port = Cli::web_port().await;
-    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+    //env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+    pretty_env_logger::init();
     for (key, value) in env::vars() {
         info!("VALUE: {}: {}", key, value);
     }
-    println!("Server starting on 0.0.0.0:{:?}" ,web_port);
+    error!("ff");
+    info!("Server starting on 0.0.0.0:{:?}" ,web_port);
     HttpServer::new(|| {
         App::new()
             .wrap(NormalizePath::trim())

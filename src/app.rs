@@ -14,6 +14,7 @@ use back::{
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
+use log::{error, info};
 
 const INDEX_HTML: &str = "./static/about.html";
 ///Main doc page
@@ -25,7 +26,7 @@ async fn index() -> impl Responder {
 #[get("/{path:.*\\.(html|css|js)}")]
 async fn indexx(path: web::Path<String>) -> actix_web::Result<fs::NamedFile> {
     let path = format!("./static/{}", path);
-    println!("{}", path);
+    info!("{}", path);
     Ok(fs::NamedFile::open(path)?)
 }
 ///создание пользователя | crate the user by `<User>`
@@ -38,7 +39,7 @@ pub async fn create_user(u: web::Json<User>) -> HttpResponse {
             HttpResponse::Created().body("User created")
         }
         Err(e) => {
-            println!("{:?}", e);
+            error!("{:?}", e);
             HttpResponse::BadRequest().body(e.to_string())
         }
     }
@@ -53,11 +54,11 @@ pub async fn user(name: web::Path<String>) -> HttpResponse {
                 name: user.name.clone(),
                 role: user.role.clone(),
             };
-            println!("{:?}", &user);
+            info!("{:?}", &user);
             HttpResponse::Ok().json(anonymus_user)
         }
         Ok(None) => {
-            println!("User not found");
+            info!("User not found");
             HttpResponse::NotFound().body("User not found")
         }
         Err(e) => HttpResponse::BadRequest().body(e.to_string()),

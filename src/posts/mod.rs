@@ -10,6 +10,7 @@ use mongodb::{
     results::{DeleteResult, InsertOneResult, UpdateResult},
     Collection,
 };
+use log::{info, debug, error};
 use post::Post;
 
 ///Создание поста
@@ -29,8 +30,15 @@ pub async fn post_create(
         date: Utc::now().timestamp_millis() as u64,
     };
     match collection.insert_one(post, None).await {
-        Ok(result) => Ok(result),
-        Err(e) => Err(e),
+        Ok(result) => {
+            info!("Post created successfully");
+            debug!("{:?}", result);
+            Ok(result)
+        }
+        Err(e) => {
+            error!("Error creating post: {:?}", e);
+            Err(e)
+        }
     }
 }
 ///Редактирование поста
@@ -53,20 +61,27 @@ pub async fn post_edit(
         }
     };
 
+    info!("Updating post {:#?}", &post.id);
+    debug!("Filter: {:?}", filter);
+    debug!("Update: {:?}", update);
+
     collection
         .update_one(filter, update, UpdateOptions::builder().build())
         .await
         .map_err(|e| e.into())
 }
-
 ///Удаление поста
 pub async fn post_delete(
     collection: &Collection<Post>,
     post_id: String,
 ) -> Result<DeleteResult, Error> {
     let filter = doc! {
-        "_id": post_id,
+        "_id": &post_id,
     };
+
+    info!("Deleting post {}", post_id);
+    debug!("Filter: {:?}", &filter);
+
     collection
         .delete_one(filter, DeleteOptions::builder().build())
         .await
@@ -78,10 +93,12 @@ pub async fn post_getall(
     author: String,
 ) -> Result<Vec<Option<Post>>, Error> {
     let filter = doc! {
-      "author": author
+        "author": &author
     };
     let mut cursor = collection.find(filter, None).await?;
-    // Используем `StreamExt` для асинхронного перебора результатов
+
+    info!("Fetching all posts for author {}", author);
+
     let mut posts = Vec::new();
     while let Some(post) = cursor.next().await {
         match post {
@@ -89,6 +106,7 @@ pub async fn post_getall(
                 posts.push(Some(post));
             }
             Err(e) => {
+                error!("Error fetching post: {:?}", e);
                 return Err(e);
             }
         }
@@ -104,16 +122,23 @@ pub async fn post_get(
     let filter = doc! {
         "_id": post_id,
     };
+
+    info!("Fetching post with id: {:?}", post_id);
+
     match collection.find_one(filter, None).await {
         Ok(result) => Ok(result),
-        Err(e) => Err(e),
+        Err(e) => {
+            error!("Error fetching post: {:?}", e);
+            Err(e)
+        }
     }
 }
-
 ///Получаем все посты из базы данных
 pub async fn post_getall_all(collection: &Collection<Post>) -> Result<Vec<Option<Post>>, Error> {
     let mut cursor = collection.find(doc! {}, None).await?;
-    // Используем `StreamExt` для асинхронного перебора результатов
+
+    info!("Fetching all posts");
+
     let mut posts = Vec::new();
     while let Some(post) = cursor.next().await {
         match post {
@@ -121,12 +146,14 @@ pub async fn post_getall_all(collection: &Collection<Post>) -> Result<Vec<Option
                 posts.push(Some(post));
             }
             Err(e) => {
+                error!("Error fetching post: {:?}", e);
                 return Err(e);
             }
         }
     }
     Ok(posts)
 }
+
 
 ///Получаем посты постранично.
 ///От 0 до n. Если 0 то выдаём 10 постов, если 1 то 20 и так далее
@@ -145,8 +172,10 @@ pub async fn post_get_page(
         .skip(skiprange as u64)
         .limit(limitrange)
         .build();
+
+    info!("Fetching posts for page: {}", page);
+
     let mut cursor = collection.find(doc! {}, options).await?;
-    // Используем `StreamExt` для асинхронного перебора результатов
     let mut posts = Vec::new();
     while let Some(post) = cursor.next().await {
         match post {
@@ -154,36 +183,35 @@ pub async fn post_get_page(
                 posts.push(Some(post));
             }
             Err(e) => {
+                error!("Error fetching post: {:?}", e);
                 return Err(e);
             }
         }
     }
-    println!("{:#?}", posts);
     Ok(posts)
 }
-
 ///Получаем все результаты содержащие слова из строки
 pub async fn post_search_vague(
     collection: &Collection<Post>,
     search_string: String,
 ) -> Result<Vec<Option<Post>>, Error> {
-    //разделение строки на подстроки
     let search_string = search_string
         .split_whitespace()
         .map(|s| s.to_string())
         .collect::<Vec<String>>();
+
     let filter = doc! {
-       "$or": [
-           { "label": { "$regex": search_string.join("|"), "$options": "i" } },
-           { "underlabel": { "$regex": search_string.join("|"), "$options": "i" } },
-           { "text": { "$regex": search_string.join("|"), "$options": "i" } },
-           { "footer": { "$regex": search_string.join("|"), "$options": "i" } },
-       ]
+        "$or": [
+            { "label": { "$regex": search_string.join("|"), "$options": "i" } },
+            { "underlabel": { "$regex": search_string.join("|"), "$options": "i" } },
+            { "text": { "$regex": search_string.join("|"), "$options": "i" } },
+            { "footer": { "$regex": search_string.join("|"), "$options": "i" } },
+        ]
     };
-    let mut cursor = collection
-        .find(filter, FindOptions::builder().build())
-        .await?;
-    // Используем `StreamExt` для асинхронного перебора результатов
+
+    info!("Searching vaguely for posts with: {}", search_string.join(" "));
+
+    let mut cursor = collection.find(filter, FindOptions::builder().build()).await?;
     let mut posts = Vec::new();
     while let Some(post) = cursor.next().await {
         match post {
@@ -191,25 +219,25 @@ pub async fn post_search_vague(
                 posts.push(Some(post));
             }
             Err(e) => {
+                error!("Error searching for posts: {:?}", e);
                 return Err(e);
             }
         }
     }
     Ok(posts)
 }
-
 ///Поиск поста по конкретной строчке
 pub async fn post_search_fair(
     collection: &Collection<Post>,
     search_string: String,
 ) -> Result<Vec<Option<Post>>, Error> {
     let filter = doc! {
-        "$text": { "$search": search_string }
+        "$text": { "$search": &search_string }
     };
-    let mut cursor = collection
-        .find(filter, FindOptions::builder().build())
-        .await?;
-    // Используем `StreamExt` для асинхронного перебора результатов
+
+    info!("Fair search for posts with: {}", search_string);
+
+    let mut cursor = collection.find(filter, FindOptions::builder().build()).await?;
     let mut posts = Vec::new();
     while let Some(post) = cursor.next().await {
         match post {
@@ -217,6 +245,7 @@ pub async fn post_search_fair(
                 posts.push(Some(post));
             }
             Err(e) => {
+                error!("Error fair searching for posts: {:?}", e);
                 return Err(e);
             }
         }
@@ -236,11 +265,12 @@ pub async fn post_search_vague_page(
         _ => (page - 1) * 10,
     };
     let limitrange = (skiprange + 10) as i64;
-    //разделение строки на подстроки
+
     let search_string = search_string
         .split_whitespace()
         .map(|s| s.to_string())
         .collect::<Vec<String>>();
+
     let filter = doc! {
         "$or": [
             { "label": { "$regex": search_string.join("|"), "$options": "i" } },
@@ -249,12 +279,15 @@ pub async fn post_search_vague_page(
             { "footer": { "$regex": search_string.join("|"), "$options": "i" } },
         ]
     };
+
     let options = mongodb::options::FindOptions::builder()
         .skip(skiprange as u64)
         .limit(limitrange)
         .build();
+
+    info!("Vague search for posts with: {}, page: {}", search_string.join(" "), page);
+
     let mut cursor = collection.find(filter, options).await?;
-    // Используем `StreamExt` для асинхронного перебора результатов
     let mut posts = Vec::new();
     while let Some(post) = cursor.next().await {
         match post {
@@ -262,6 +295,7 @@ pub async fn post_search_vague_page(
                 posts.push(Some(post));
             }
             Err(e) => {
+                error!("Error vague searching for posts: {:?}", e);
                 return Err(e);
             }
         }
@@ -281,15 +315,19 @@ pub async fn post_search_fair_page(
         _ => (page - 1) * 10,
     };
     let limitrange = (skiprange + 10) as i64;
+
     let filter = doc! {
-        "$text": { "$search": search_string }
+        "$text": { "$search": &search_string }
     };
+
     let options = mongodb::options::FindOptions::builder()
         .skip(skiprange as u64)
         .limit(limitrange)
         .build();
+
+    info!("Fair search for posts with: {}, page: {}", search_string, page);
+
     let mut cursor = collection.find(filter, options).await?;
-    // Используем `StreamExt` для асинхронного перебора результатов
     let mut posts = Vec::new();
     while let Some(post) = cursor.next().await {
         match post {
@@ -297,6 +335,7 @@ pub async fn post_search_fair_page(
                 posts.push(Some(post));
             }
             Err(e) => {
+                error!("Error fair searching for posts: {:?}", e);
                 return Err(e);
             }
         }

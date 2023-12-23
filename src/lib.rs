@@ -12,7 +12,6 @@ use mongodb::error::Error;
 use mongodb::options::UpdateOptions;
 use mongodb::results::UpdateResult;
 use mongodb::Collection;
-use log::info;
 
 //Функции для взаимодействия с role. Пока никак не используются.
 pub async fn change_pid(
@@ -79,7 +78,7 @@ pub async fn is_admin(collection: &Collection<User>, name: String) -> bool {
 }
 
 /// Get args from env
-#[derive(Parser, Debug)]
+#[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
     ///WEB PORT
@@ -128,9 +127,7 @@ pub struct Cli {
 impl Cli {
     //?? я кстати не помню зачем. Типо асинк вызов
     pub async fn push() -> Self {
-        let parsed = Cli::parse();
-        info!("{:#?}",parsed);
-        parsed
+        Cli::parse()
     }
     pub async fn mongo_adress() -> String {
         let cli = Cli::push().await;
