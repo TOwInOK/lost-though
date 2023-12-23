@@ -15,7 +15,7 @@ pub async fn comment_add(
     mut comment: Comment,
 ) -> Result<ObjectId, Box<dyn Error>> {
     let id = ObjectId::new();
-    comment.id = Some(id.clone());
+    comment.id = Some(id);
     let filter = doc! {
         "_id": post_id,
     };

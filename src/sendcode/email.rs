@@ -3,10 +3,10 @@ use lettre::{
     message::header::ContentType, transport::smtp::authentication::Credentials, Message,
     SmtpTransport, Transport,
 };
+use log::{error, info};
 use rand::random;
 use redis::Commands;
 use std::{error::Error, fmt};
-use log::{error, info};
 
 ///get req for creat code and put it in redis
 pub async fn send_password_code(email_to: String, name: String) -> Result<(), Box<dyn Error>> {
@@ -49,7 +49,7 @@ pub async fn send_password_code(email_to: String, name: String) -> Result<(), Bo
         Err(e) => {
             error!("{:#?}", e);
             Err(Box::new(e))
-        },
+        }
     }
 }
 
