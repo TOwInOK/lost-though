@@ -75,8 +75,10 @@ pub async fn get_user_settings(name: web::Path<String>, u: web::Json<Auth>) -> H
     match user_get(collection, name.to_string()).await {
         Ok(Some(i)) => {
             if i.validate_anonimus(&u) {
+                info!("validation..fine [settings]");
                 HttpResponse::Ok().json(i)
             } else {
+                info!("fail validation [settings]");
                 HttpResponse::Forbidden().body("Wrong password")
             }
         }
