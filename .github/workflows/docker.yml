@@ -49,6 +49,4 @@ jobs:
        tags: ghcr.io/towinok/monotipe:latest,ghcr.io/towinok/monotipe:${{ github.sha }}
        cache-from: type=gha
        cache-to: type=gha,mode=max
-       load: true
-       target: builder, loader
        
