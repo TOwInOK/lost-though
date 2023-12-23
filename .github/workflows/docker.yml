@@ -27,4 +27,4 @@ jobs:
      with:
        context: .
        push: true
-       tags: ghcr.io/towinok/monotipe:latest
+       tags: ghcr.io/towinok/monotipe:latest,ghcr.io/towinok/monotipe:${{ github.sha }}
