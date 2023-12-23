@@ -10,14 +10,14 @@ COPY ./src ./src
 #BUILD
 RUN cargo build --release --verbose
 
-# Final Stage
-FROM alpine:latest
 
-#Update and add some dependencies
-RUN apk update && apk upgrade && \
-    apk add \
-    openssl-dev\
-    ca-certificates
+FROM ubuntu:noble
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libssl-dev\
+    ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 #ARGS
 ARG mongo_address=mongo
 ARG redis_address=redis
@@ -31,6 +31,7 @@ ARG password_mongo=example
 ARG smtp_login
 ARG smtp_password
 ARG smtp_address
+ARG smtp_address_from
 #trace, info, error, debug
 ARG RUST_LOG=info 
 
@@ -51,14 +52,13 @@ ENV REDIS_PASSWORD $password_redis
 ENV SMTP_LOGIN $smtp_login
 ENV SMTP_PASSWORD $smtp_password
 ENV SMTP_ADDRESS $smtp_address
+ENV SMTP_ADDRESS_FROM $smtp_address_from
 
+#COPY
+COPY --from=builder /app/static ./app/static
+COPY --from=builder /app/target/release/back ./app/runme
 #MAIN DIR .
 WORKDIR /app
-COPY --from=builder /app/static /app/static
-COPY --from=builder /app/target/release/back /app/back
 
 #RUN
-CMD ["./back"]
-
-
-
+ENTRYPOINT [ "./runme" ]
