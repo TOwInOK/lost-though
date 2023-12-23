@@ -1,9 +1,9 @@
 mod app;
-use std::env;
 use actix_web::{middleware::NormalizePath, web, App, HttpServer};
 use app::*;
 use back::Cli;
-use log::{info, error};
+use log::{error, info};
+use std::env;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -14,7 +14,7 @@ async fn main() -> std::io::Result<()> {
         info!("VALUE: {}: {}", key, value);
     }
     error!("ff");
-    info!("Server starting on 0.0.0.0:{:?}" ,web_port);
+    info!("Server starting on 0.0.0.0:{:?}", web_port);
     HttpServer::new(|| {
         App::new()
             .wrap(NormalizePath::trim())

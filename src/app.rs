@@ -11,10 +11,10 @@ use back::{
         *,
     },
 };
+use log::{error, info};
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use log::{error, info};
 
 const INDEX_HTML: &str = "./static/about.html";
 ///Main doc page
@@ -341,7 +341,10 @@ pub async fn code_get(code: web::Path<usize>, auth: web::Json<Auth>) -> HttpResp
 }
 
 #[post("{post}/comment/add")]
-pub async fn add_comment(post_id: web::Path<String>, comment: web::Json<CommentAdd>) -> HttpResponse {
+pub async fn add_comment(
+    post_id: web::Path<String>,
+    comment: web::Json<CommentAdd>,
+) -> HttpResponse {
     let collection = get_connection_posts().await;
     //check name in auth and name in comment, and validate it.
     if comment.0.auth.validate().await && comment.0.auth.name == comment.0.comment.author {
@@ -353,8 +356,7 @@ pub async fn add_comment(post_id: web::Path<String>, comment: web::Json<CommentA
             Ok(v) => HttpResponse::Ok().body(v.to_string()),
             Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
         }
-    }
-    else {
+    } else {
         HttpResponse::Forbidden().body("Auth fail")
     }
 }
@@ -362,7 +364,10 @@ pub async fn add_comment(post_id: web::Path<String>, comment: web::Json<CommentA
 ///Delete post
 /// with `PostId <String>` + `<Auth>`
 #[delete("{post_id}/comment/delete")]
-pub async fn delete_comment(post_id: web::Path<String>, comment: web::Json<CommentDelete>) -> HttpResponse {
+pub async fn delete_comment(
+    post_id: web::Path<String>,
+    comment: web::Json<CommentDelete>,
+) -> HttpResponse {
     let collection = get_connection_posts().await;
     //try to convert from String to ObjectID
     let post_id = match ObjectId::from_str(&post_id) {

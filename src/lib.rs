@@ -121,8 +121,10 @@ pub struct Cli {
     /// adress smpt
     #[arg(long = "smtp-adress", env = "SMTP_ADDRESS")]
     smtp_address: String,
+    #[arg(long = "smtp-adress", env = "SMTP_ADDRESS_FROM")]
+    smtp_address_from: Option<String>,
+    //TOwInOK@nothub.ru
 }
-
 
 impl Cli {
     //?? я кстати не помню зачем. Типо асинк вызов
@@ -138,7 +140,7 @@ impl Cli {
         } else {
             String::new()
         };
-    
+
         let output = format!(
             "mongodb://{}{}:{}",
             auth_part, cli.mongo_address, cli.mongo_port
@@ -166,12 +168,13 @@ impl Cli {
         let output = format!("redis://{}/", cli.redis_address);
         output
     }
-    pub async fn smtp_login() -> String {
+    pub async fn smtp() -> (String, String, String, String) {
         let cli = Cli::parse();
-        cli.smtp_login
-    }
-    pub async fn smtp_password() -> String {
-        let cli = Cli::parse();
-        cli.smtp_password
+        (
+            cli.smtp_address_from.unwrap_or(cli.smtp_login.clone()),
+            cli.smtp_address,
+            cli.smtp_login,
+            cli.smtp_password,
+        )
     }
 }

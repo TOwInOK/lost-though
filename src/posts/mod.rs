@@ -3,6 +3,7 @@ pub mod post;
 use self::post::PostCreate;
 use chrono::Utc;
 use futures::StreamExt;
+use log::{debug, error, info};
 use mongodb::{
     bson::{doc, oid::ObjectId},
     error::Error,
@@ -10,7 +11,6 @@ use mongodb::{
     results::{DeleteResult, InsertOneResult, UpdateResult},
     Collection,
 };
-use log::{info, debug, error};
 use post::Post;
 
 ///Создание поста
@@ -154,7 +154,6 @@ pub async fn post_getall_all(collection: &Collection<Post>) -> Result<Vec<Option
     Ok(posts)
 }
 
-
 ///Получаем посты постранично.
 ///От 0 до n. Если 0 то выдаём 10 постов, если 1 то 20 и так далее
 pub async fn post_get_page(
@@ -209,9 +208,14 @@ pub async fn post_search_vague(
         ]
     };
 
-    info!("Searching vaguely for posts with: {}", search_string.join(" "));
+    info!(
+        "Searching vaguely for posts with: {}",
+        search_string.join(" ")
+    );
 
-    let mut cursor = collection.find(filter, FindOptions::builder().build()).await?;
+    let mut cursor = collection
+        .find(filter, FindOptions::builder().build())
+        .await?;
     let mut posts = Vec::new();
     while let Some(post) = cursor.next().await {
         match post {
@@ -237,7 +241,9 @@ pub async fn post_search_fair(
 
     info!("Fair search for posts with: {}", search_string);
 
-    let mut cursor = collection.find(filter, FindOptions::builder().build()).await?;
+    let mut cursor = collection
+        .find(filter, FindOptions::builder().build())
+        .await?;
     let mut posts = Vec::new();
     while let Some(post) = cursor.next().await {
         match post {
@@ -285,7 +291,11 @@ pub async fn post_search_vague_page(
         .limit(limitrange)
         .build();
 
-    info!("Vague search for posts with: {}, page: {}", search_string.join(" "), page);
+    info!(
+        "Vague search for posts with: {}, page: {}",
+        search_string.join(" "),
+        page
+    );
 
     let mut cursor = collection.find(filter, options).await?;
     let mut posts = Vec::new();
@@ -325,7 +335,10 @@ pub async fn post_search_fair_page(
         .limit(limitrange)
         .build();
 
-    info!("Fair search for posts with: {}, page: {}", search_string, page);
+    info!(
+        "Fair search for posts with: {}, page: {}",
+        search_string, page
+    );
 
     let mut cursor = collection.find(filter, options).await?;
     let mut posts = Vec::new();

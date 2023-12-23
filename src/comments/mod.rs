@@ -53,10 +53,7 @@ pub async fn comment_delete(
         }
     };
 
-    match collection
-        .update_one(filter, update, None)
-        .await
-    {
+    match collection.update_one(filter, update, None).await {
         Ok(v) => Ok(v),
         Err(e) => Err(Box::new(e)),
     }

@@ -6,6 +6,7 @@ use lettre::{
 use rand::random;
 use redis::Commands;
 use std::{error::Error, fmt};
+use log::{error, info};
 
 ///get req for creat code and put it in redis
 pub async fn send_password_code(email_to: String, name: String) -> Result<(), Box<dyn Error>> {
@@ -13,18 +14,19 @@ pub async fn send_password_code(email_to: String, name: String) -> Result<(), Bo
     let connection = Cli::redis_adress_simple().await;
     let client = redis::Client::open(connection)?;
     let mut con = client.get_connection()?;
-    let login: String = Cli::smtp_login().await;
-    let password: String = Cli::smtp_password().await;
+    let smtp = Cli::smtp().await;
+    let (address_from, address, login, password) = smtp;
 
     //check code
     let check_code: Option<u16> = con.hget(&name, "code")?;
-
+    info!("Check code into redis");
     if check_code.is_some() {
+        error!("Code already exist");
         return Err(Box::new(CodeError::new("Code has already been created")));
     }
-
+    info!("Code is't exist");
     let email = Message::builder()
-        .from("monotipe. <TOwInOK@nothub.ru>".parse().unwrap())
+        .from(format!("monotipe. <{}>", address_from).parse().unwrap())
         .to(email_to.parse().unwrap())
         .subject("Code for suguest")
         .header(ContentType::TEXT_PLAIN)
@@ -32,8 +34,7 @@ pub async fn send_password_code(email_to: String, name: String) -> Result<(), Bo
         .unwrap();
 
     let creds = Credentials::new(login.to_owned(), password.to_owned());
-
-    let mailer = SmtpTransport::relay("smtp.yandex.ru")
+    let mailer = SmtpTransport::relay(&address.to_string())
         .unwrap()
         .credentials(creds)
         .build();
@@ -42,9 +43,13 @@ pub async fn send_password_code(email_to: String, name: String) -> Result<(), Bo
         Ok(_) => {
             con.hset(&name, "code", code)?;
             con.expire(&name, 300)?;
+            info!("Code send");
             Ok(())
         }
-        Err(e) => Err(Box::new(e)),
+        Err(e) => {
+            error!("{:#?}", e);
+            Err(Box::new(e))
+        },
     }
 }
 
@@ -57,7 +62,8 @@ pub async fn check_code(code: usize, name: String) -> Result<(), Box<dyn Error>>
     match check_code {
         Some(saved_code) if saved_code == code as u16 => {
             // Код совпал, удаляем его из Redis hash
-            let _: () = con.del(&name)?;
+            con.del(&name)?;
+            info!("remove redis code");
             Ok(())
         }
         _ => Err(Box::new(CodeError::new("Code doesn't match"))),
