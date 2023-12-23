@@ -47,7 +47,7 @@ services:
 
   # Api server 
   monotipe:
-    image: docker.io/library/monotipe:latest
+    image: ghcr.io/towinok/monotipe:latest
     container_name: monotipe
     restart: unless-stopped
     ports:
