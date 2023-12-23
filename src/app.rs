@@ -1,5 +1,9 @@
 use actix_files as fs;
 use actix_web::{delete, get, post, put, web, HttpRequest, HttpResponse, Responder};
+use log::{info, error, trace};
+use mongodb::bson::oid::ObjectId;
+use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use back::{
     autentifications::auth::Auth,
     comments::{comment::Comment, comment_add, comment_delete},
@@ -11,21 +15,20 @@ use back::{
         *,
     },
 };
-use log::{error, info};
-use mongodb::bson::oid::ObjectId;
-use serde::{Deserialize, Serialize};
-use std::str::FromStr;
+
 
 const INDEX_HTML: &str = "./static/about.html";
 ///Main doc page
 #[get("/")]
 async fn index() -> impl Responder {
+    trace!("access to index!");
     fs::NamedFile::open_async(INDEX_HTML).await
 }
 ///Doc page
 #[get("/{path:.*\\.(html|css|js)}")]
 async fn indexx(path: web::Path<String>) -> actix_web::Result<fs::NamedFile> {
     let path = format!("./static/{}", path);
+    trace!("access to {}", &path);
     info!("{}", path);
     Ok(fs::NamedFile::open(path)?)
 }
