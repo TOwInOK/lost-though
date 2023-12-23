@@ -1,16 +1,22 @@
 mod app;
-
+use std::env;
 use actix_web::{middleware::NormalizePath, web, App, HttpServer};
 use app::*;
 use back::Cli;
+use env_logger::Env;
+use log::info;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let web_port = Cli::web_port().await;
-    println!("Server starting on http://127.0.0.1:{:?}", web_port);
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+    for (key, value) in env::vars() {
+        info!("VALUE: {}: {}", key, value);
+    }
+    println!("Server starting on 0.0.0.0:{:?}" ,web_port);
     HttpServer::new(|| {
         App::new()
-            .wrap(NormalizePath::default())
+            .wrap(NormalizePath::trim())
             .service(index)
             .service(indexx)
             .service(

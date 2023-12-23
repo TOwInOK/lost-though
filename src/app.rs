@@ -25,6 +25,7 @@ async fn index() -> impl Responder {
 #[get("/{path:.*\\.(html|css|js)}")]
 async fn indexx(path: web::Path<String>) -> actix_web::Result<fs::NamedFile> {
     let path = format!("./static/{}", path);
+    println!("{}", path);
     Ok(fs::NamedFile::open(path)?)
 }
 ///создание пользователя | crate the user by `<User>`

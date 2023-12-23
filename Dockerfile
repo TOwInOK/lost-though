@@ -14,46 +14,47 @@ RUN cargo build --release --verbose
 FROM debian:stable-slim
 
 RUN apt-get update
-RUN apt-get upgrade
 RUN apt-get install libssl3
 
 #ARGS
-ARG MONGO_ADRESS="127.0.0.1"
-ARG REDIS_ADRESS="127.0.0.1"
-ARG LOGIN_REDIS="example"
-ARG PASSWORD_REDIS="example"
-ARG LOGIN_MONGO="example"
-ARG PASSWORD_MONGO="example"
-ARG SMTP_LOGIN="Example"
-ARG SMTP_PASSWORD="Example"
-ARG SMTP_ADRESS="Example"
+ARG mongo_address=mongo
+ARG redis_address=redis
+
+ARG login_redis
+ARG password_redis
+
+ARG login_mongo=root
+ARG password_mongo=example
+
+ARG smtp_login
+ARG smtp_password
+ARG smtp_address
 
 
 
 #MAIN_WEB_PORT
 EXPOSE 8080
-#MONGODB
-EXPOSE 27017
-#REDIS
-EXPOSE 6379
 
 #ENV
-ENV RUST_LOG=info 
-ENV MONGO_ADRESS=$MONGO_ADRESS 
-ENV REDIS_ADRESS=$REDIS_ADRESS 
-ENV LOGIN_REDIS=$LOGIN_REDIS 
-ENV PASSWORD_REDIS=$PASSWORD_REDIS 
-ENV LOGIN_MONGO=$LOGIN_MONGO 
-ENV PASSWORD_MONGO=$PASSWORD_MONGO
-ENV SMTP_LOGIN=$SMTP_LOGIN
-ENV SMTP_PASSWORD=$SMTP_PASSWORD
-ENV SMTP_ADRESS=$SMTP_ADRESS
+ENV MONGO_ADDRESS $mongo_address
+ENV MONGO_LOGIN $login_mongo
+ENV MONGO_PASSWORD $password_mongo
+
+ENV REDIS_ADDRESS $redis_address
+ENV REDIS_LOGIN $login_redis
+ENV REDIS_PASSWORD $password_redis
+
+ENV SMTP_LOGIN $smtp_login
+ENV SMTP_PASSWORD $smtp_password
+ENV SMTP_ADDRESS $smtp_address
 
 #MAIN DIR .
 WORKDIR /app
+COPY --from=builder /app/static /app/static
 COPY --from=builder /app/target/release/back /app/back
 
 #RUN
-CMD ["./back", "--mongo-adress", "${MONGO_ADRESS}", "--redis-adress", "${REDIS_ADRESS}", "--redis-login", "${LOGIN_REDIS}", "--redis-password", "${PASSWORD_REDIS}", "--mongo-login", "${LOGIN_MONGO}", "--mongo-password", "${PASSWORD_MONGO}", "--smtp-login", "${SMTP_LOGIN}", "--smtp-password", "${SMTP_PASSWORD}", "--smtp-adress", "${SMTP_ADRESS}"]
+CMD ["./back"]
+
 
 

@@ -12,6 +12,7 @@ use mongodb::error::Error;
 use mongodb::options::UpdateOptions;
 use mongodb::results::UpdateResult;
 use mongodb::Collection;
+use log::info;
 
 //Функции для взаимодействия с role. Пока никак не используются.
 pub async fn change_pid(
@@ -78,7 +79,7 @@ pub async fn is_admin(collection: &Collection<User>, name: String) -> bool {
 }
 
 /// Get args from env
-#[derive(Parser)]
+#[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
     ///WEB PORT
@@ -86,56 +87,66 @@ pub struct Cli {
     web_port: u16,
     ///MongoDB
     ///Adress for mongo db
-    #[arg(short = 'a', long = "mongo-adress", default_value_t = format!("127.0.0.1"))]
-    mongo_adress: String,
+    #[arg(short = 'a', long = "mongo-address", default_value_t = format!("127.0.0.1"), env = "MONGO_ADDRESS")]
+    mongo_address: String,
     ///Login for auth into db (mongo)
-    #[arg(long = "mongo-login")]
+    #[arg(long = "mongo-login", env = "MONGO_LOGIN")]
     mongo_login: Option<String>,
     ///Password for auth into db (mongo)
-    #[arg(long = "mongo-password")]
+    #[arg(long = "mongo-password", env = "MONGO_PASSWORD")]
     mongo_password: Option<String>,
     ///Port for db (mongo)
-    #[arg(long = "mongo-port", default_value_t = 27017)]
+    #[arg(long = "mongo-port", default_value_t = 27017, env = "MONGO_PORT")]
     mongo_port: u16,
 
     ////REDIS
     ///Login for auth into db (redis)
-    #[arg(long = "redis-login")]
+    #[arg(long = "redis-login", env = "REDIS_LOGIN")]
     redis_login: Option<String>,
     ///Password for auth into db (mongo)
-    #[arg(long = "redis-password")]
+    #[arg(long = "redis-password", env = "REDIS_PASSWORD")]
     redis_password: Option<String>,
     ///Port for redis
-    #[arg(long = "redis-port", default_value_t = 6379)]
+    #[arg(long = "redis-port", default_value_t = 6379, env = "REDIS_PORT")]
     redis_port: u16,
-    #[arg(long = "redis-adress", default_value_t = format!("127.0.0.1"))]
-    redis_adress: String,
+    #[arg(long = "redis-address", default_value_t = format!("127.0.0.1"), env = "REDIS_ADDRESS")]
+    redis_address: String,
 
     ////SMTP
     /// Login smpt
-    #[arg(long = "smtp-login")]
+    #[arg(long = "smtp-login", env = "SMTP_LOGIN")]
     smtp_login: String,
     /// Password (or secure code) smtp
-    #[arg(long = "smtp-password")]
+    #[arg(long = "smtp-password", env = "SMTP_PASSWORD")]
     smtp_password: String,
     /// adress smpt
-    #[arg(long = "smtp-adress")]
-    smtp_adress: String,
+    #[arg(long = "smtp-adress", env = "SMTP_ADDRESS")]
+    smtp_address: String,
 }
 
+
 impl Cli {
+    //?? я кстати не помню зачем. Типо асинк вызов
     pub async fn push() -> Self {
-        Cli::parse()
+        let parsed = Cli::parse();
+        info!("{:#?}",parsed);
+        parsed
     }
     pub async fn mongo_adress() -> String {
-        let cli = Cli::parse();
+        let cli = Cli::push().await;
+        let login = cli.mongo_login.unwrap_or_default();
+        let password = cli.mongo_password.unwrap_or_default();
+        let auth_part = if !login.is_empty() && !password.is_empty() {
+            format!("{}:{}@", login, password)
+        } else {
+            String::new()
+        };
+    
         let output = format!(
-            "mongodb://{}:{}@{}:{}",
-            cli.mongo_login.unwrap_or_default(),
-            cli.mongo_password.unwrap_or_default(),
-            cli.mongo_adress,
-            cli.mongo_port
+            "mongodb://{}{}:{}",
+            auth_part, cli.mongo_address, cli.mongo_port
         );
+        println!("{output}");
         output
     }
     pub async fn web_port() -> u16 {
@@ -148,14 +159,14 @@ impl Cli {
             "redis://{}:{}@{}:{}",
             cli.redis_login.unwrap_or_default(),
             cli.redis_password.unwrap_or_default(),
-            cli.redis_adress,
+            cli.redis_address,
             cli.redis_port
         );
         output
     }
     pub async fn redis_adress_simple() -> String {
         let cli = Cli::parse();
-        let output = format!("redis://{}/", cli.redis_adress);
+        let output = format!("redis://{}/", cli.redis_address);
         output
     }
     pub async fn smtp_login() -> String {
