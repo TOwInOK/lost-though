@@ -19,6 +19,7 @@ jobs:
        path: |
          ~/.cargo/registry
          ~/.cargo/git
+         ./target/release/deps
        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
        restore-keys: |
          ${{ runner.os }}-cargo-registry-
