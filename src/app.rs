@@ -15,7 +15,7 @@ use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-const INDEX_HTML: &str = "static/about.html";
+const INDEX_HTML: &str = "./static/about.html";
 ///Main doc page
 #[get("/")]
 async fn index() -> impl Responder {
@@ -24,7 +24,7 @@ async fn index() -> impl Responder {
 ///Doc page
 #[get("/{path:.*\\.(html|css|js)}")]
 async fn indexx(path: web::Path<String>) -> actix_web::Result<fs::NamedFile> {
-    let path = format!("static/{}", path);
+    let path = format!("./static/{}", path);
     Ok(fs::NamedFile::open(path)?)
 }
 ///создание пользователя | crate the user by `<User>`
@@ -338,33 +338,43 @@ pub async fn code_get(code: web::Path<usize>, auth: web::Json<Auth>) -> HttpResp
     }
 }
 
-/// [Error] Добавить Auth!
-///Add some comments into current `post_id` (post).
 #[post("{post}/comment/add")]
-pub async fn add_comment(post_id: web::Path<String>, comment: web::Json<Comment>) -> HttpResponse {
+pub async fn add_comment(post_id: web::Path<String>, comment: web::Json<CommentAdd>) -> HttpResponse {
     let collection = get_connection_posts().await;
-    let post_id = match ObjectId::from_str(&post_id) {
-        Ok(oid) => oid,
-        Err(_) => return HttpResponse::BadRequest().body("Invalid ObjectId"),
-    };
-    match comment_add(collection, post_id.to_owned(), comment.0).await {
-        Ok(_) => HttpResponse::Ok().body("comment added"),
-        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    //check name in auth and name in comment, and validate it.
+    if comment.0.auth.validate().await && comment.0.auth.name == comment.0.comment.author {
+        let post_id = match ObjectId::from_str(&post_id) {
+            Ok(oid) => oid,
+            Err(_) => return HttpResponse::BadRequest().body("Invalid ObjectId"),
+        };
+        match comment_add(collection, post_id, comment.0.comment).await {
+            Ok(v) => HttpResponse::Ok().body(v.to_string()),
+            Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+        }
+    }
+    else {
+        HttpResponse::Forbidden().body("Auth fail")
     }
 }
 
 ///Delete post
 /// with `PostId <String>` + `<Auth>`
-#[delete("{post}/comment/delete")]
-pub async fn delete_comment(post_id: web::Path<String>, auth: web::Json<Auth>) -> HttpResponse {
+#[delete("{post_id}/comment/delete")]
+pub async fn delete_comment(post_id: web::Path<String>, comment: web::Json<CommentDelete>) -> HttpResponse {
     let collection = get_connection_posts().await;
+    //try to convert from String to ObjectID
     let post_id = match ObjectId::from_str(&post_id) {
         Ok(oid) => oid,
-        Err(_) => return HttpResponse::BadRequest().body("Invalid ObjectId"),
+        Err(_) => return HttpResponse::BadRequest().body("Invalid post ID"),
     };
-    if auth.validate().await {
-        match comment_delete(collection, post_id, auth.name.to_string().to_lowercase()).await {
-            Ok(_) => HttpResponse::Ok().body("comment added"),
+    //try to convert from String to ObjectID
+    let comment_id = match ObjectId::from_str(&comment.0.comment_id) {
+        Ok(oid) => oid,
+        Err(_) => return HttpResponse::BadRequest().body("Invalid post ID"),
+    };
+    if comment.0.auth.validate().await {
+        match comment_delete(collection, post_id, comment_id).await {
+            Ok(_) => HttpResponse::Ok().body("comment deleted"),
             Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
         }
     } else {
@@ -389,4 +399,16 @@ pub struct UserChangerAuth {
 pub struct UserChanger {
     pub user: User,
     pub newpassword: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CommentAdd {
+    pub comment: Comment,
+    pub auth: Auth,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CommentDelete {
+    pub comment_id: String,
+    pub auth: Auth,
 }

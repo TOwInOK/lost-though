@@ -3,18 +3,19 @@ use crate::posts::post::Post;
 use comment::Comment;
 use mongodb::{
     bson::{doc, oid::ObjectId, to_document},
-    options::DeleteOptions,
-    results::{DeleteResult, UpdateResult},
+    results::UpdateResult,
     Collection,
 };
 use std::error::Error;
 
-///Добавляем комментарии к посту
+///Add commet to post throw UUID of post and get UUID of comment
 pub async fn comment_add(
     collection: Collection<Post>,
     post_id: ObjectId,
-    comment: Comment,
-) -> Result<UpdateResult, Box<dyn Error>> {
+    mut comment: Comment,
+) -> Result<ObjectId, Box<dyn Error>> {
+    let id = ObjectId::new();
+    comment.id = Some(id.clone());
     let filter = doc! {
         "_id": post_id,
     };
@@ -24,22 +25,36 @@ pub async fn comment_add(
         }
     };
     match collection.update_one(filter, update, None).await {
-        Ok(result) => Ok(result),
+        Ok(_) => Ok(id),
         Err(e) => Err(Box::new(e)),
     }
 }
 
+///Use UUID of comment to remove it
 pub async fn comment_delete(
     collection: Collection<Post>,
     post_id: ObjectId,
-    validated_username: String,
-) -> Result<DeleteResult, Box<dyn Error>> {
+    comment_id: ObjectId,
+) -> Result<UpdateResult, Box<dyn Error>> {
     let filter = doc! {
         "_id": post_id,
-        "author": validated_username,
+        "comments": {
+            "$elemMatch": {
+                "_id": comment_id
+            }
+        }
     };
+
+    let update = doc! {
+        "$pull": {
+            "comments": {
+                "_id": comment_id
+            }
+        }
+    };
+
     match collection
-        .delete_one(filter, DeleteOptions::builder().build())
+        .update_one(filter, update, None)
         .await
     {
         Ok(v) => Ok(v),
