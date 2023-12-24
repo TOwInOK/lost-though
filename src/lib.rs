@@ -7,6 +7,7 @@ pub mod users;
 use crate::users::user::Role;
 use crate::users::user::User;
 use clap::Parser;
+use log::debug;
 use mongodb::bson::doc;
 use mongodb::error::Error;
 use mongodb::options::UpdateOptions;
@@ -122,7 +123,7 @@ pub struct Cli {
     #[arg(long = "smtp-adress", env = "SMTP_ADDRESS")]
     smtp_address: String,
     ///sending from client of smtp if login is different
-    #[arg(long = "smtp-adress", env = "SMTP_ADDRESS_FROM")]
+    #[arg(long = "smtp-adress-from", env = "SMTP_ADDRESS_FROM")]
     smtp_address_from: Option<String>,
 }
 
@@ -145,7 +146,7 @@ impl Cli {
             "mongodb://{}{}:{}",
             auth_part, cli.mongo_address, cli.mongo_port
         );
-        println!("{output}");
+        debug!("{output}");
         output
     }
     pub async fn web_port() -> u16 {

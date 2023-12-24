@@ -2,6 +2,7 @@ pub mod user;
 use crate::Role;
 use crate::User;
 use crate::{autentifications::auth::Auth, posts::post::Post};
+use log::debug;
 use mongodb::{
     bson::doc,
     error::Error,
@@ -40,7 +41,7 @@ pub async fn user_get(collection: Collection<User>, name: String) -> Result<Opti
     };
     match collection.find_one(filter, None).await {
         Ok(result) => {
-            eprintln!("{:#?}", result);
+            debug!("{:#?}", result);
             Ok(result)
         }
         Err(e) => Err(e),

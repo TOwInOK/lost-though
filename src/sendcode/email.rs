@@ -3,7 +3,7 @@ use lettre::{
     message::header::ContentType, transport::smtp::authentication::Credentials, Message,
     SmtpTransport, Transport,
 };
-use log::{error, info};
+use log::{error, info, debug};
 use rand::random;
 use redis::Commands;
 use std::{error::Error, fmt};
@@ -26,13 +26,13 @@ pub async fn send_password_code(email_to: String, name: String) -> Result<(), Bo
     }
     info!("Code is't exist");
     let email = Message::builder()
-        .from(format!("monotipe. <{}>", address_from).parse().unwrap())
-        .to(email_to.parse().unwrap())
+        .from(format!("monotipe. <{}>", &address_from).parse()?)
+        .to(email_to.clone().parse().unwrap())
         .subject("Code for suguest")
         .header(ContentType::TEXT_PLAIN)
         .body(format!("Your code {}", code))
         .unwrap();
-
+    debug!("email build | send from {} to {}", address_from, email_to);
     let creds = Credentials::new(login.to_owned(), password.to_owned());
     let mailer = SmtpTransport::relay(&address.to_string())
         .unwrap()
