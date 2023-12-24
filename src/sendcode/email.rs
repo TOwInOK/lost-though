@@ -25,6 +25,7 @@ pub async fn send_password_code(email_to: String, name: String) -> Result<(), Bo
         return Err(Box::new(CodeError::new("Code has already been created")));
     }
     info!("Code is't exist");
+    debug!("Starting email building | send from {} to {}", address_from, email_to);
     let email = Message::builder()
         .from(format!("monotipe. <{}>", &address_from).parse()?)
         .to(email_to.clone().parse().unwrap())
