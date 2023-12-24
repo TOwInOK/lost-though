@@ -121,9 +121,9 @@ pub struct Cli {
     /// adress smpt
     #[arg(long = "smtp-adress", env = "SMTP_ADDRESS")]
     smtp_address: String,
+    ///sending from client of smtp if login is different
     #[arg(long = "smtp-adress", env = "SMTP_ADDRESS_FROM")]
     smtp_address_from: Option<String>,
-    //TOwInOK@nothub.ru
 }
 
 impl Cli {
@@ -171,9 +171,13 @@ impl Cli {
     pub async fn smtp() -> (String, String, String, String) {
         let cli = Cli::parse();
         (
+            //sending from client of smtp if login is different
             cli.smtp_address_from.unwrap_or_else(|| cli.smtp_login.clone()),
+            //smtp address of provider
             cli.smtp_address,
+            //login
             cli.smtp_login,
+            //password
             cli.smtp_password,
         )
     }

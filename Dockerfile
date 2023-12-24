@@ -49,9 +49,13 @@ ENV REDIS_ADDRESS $redis_address
 ENV REDIS_LOGIN $login_redis
 ENV REDIS_PASSWORD $password_redis
 
+#login
 ENV SMTP_LOGIN $smtp_login
+#password
 ENV SMTP_PASSWORD $smtp_password
+#address for smtp connection
 ENV SMTP_ADDRESS $smtp_address
+#adress for sending if login is different
 ENV SMTP_ADDRESS_FROM $smtp_address_from
 
 #COPY
