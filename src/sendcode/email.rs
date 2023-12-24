@@ -25,15 +25,14 @@ pub async fn send_password_code(email_to: String, name: String) -> Result<(), Bo
         return Err(Box::new(CodeError::new("Code has already been created")));
     }
     info!("Code is't exist");
-    debug!("Starting email building | send from {} to {}", address_from, email_to);
+    debug!("Starting email building | send from {} to {}", &address_from, &email_to);
     let email = Message::builder()
-        .from(format!("monotipe. <{}>", &address_from).parse()?)
+        .from(format!("monotipe. <{}>", address_from).parse()?)
         .to(email_to.clone().parse().unwrap())
         .subject("Code for suguest")
         .header(ContentType::TEXT_PLAIN)
         .body(format!("Your code {}", code))
         .unwrap();
-    debug!("email build | send from {} to {}", address_from, email_to);
     let creds = Credentials::new(login.to_owned(), password.to_owned());
     let mailer = SmtpTransport::relay(&address.to_string())
         .unwrap()
