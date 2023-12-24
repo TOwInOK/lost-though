@@ -171,14 +171,22 @@ impl Cli {
     }
     pub async fn smtp() -> (String, String, String, String) {
         let cli = Cli::parse();
+
+        let smtp_address_from = cli.smtp_address_from.map_or_else(
+            || cli.smtp_login.clone(),
+            |value| {
+                if value.trim().is_empty() {
+                    cli.smtp_login.clone()
+                } else {
+                    value
+                }
+            },
+        );
+
         (
-            //sending from client of smtp if login is different
-            cli.smtp_address_from.unwrap_or_else(|| cli.smtp_login.clone()),
-            //smtp address of provider
+            smtp_address_from,
             cli.smtp_address,
-            //login
             cli.smtp_login,
-            //password
             cli.smtp_password,
         )
     }

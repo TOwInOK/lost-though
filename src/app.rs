@@ -1,9 +1,5 @@
 use actix_files as fs;
 use actix_web::{delete, get, post, put, web, HttpRequest, HttpResponse, Responder};
-use log::{info, error, trace};
-use mongodb::bson::oid::ObjectId;
-use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 use back::{
     autentifications::auth::Auth,
     comments::{comment::Comment, comment_add, comment_delete},
@@ -15,7 +11,10 @@ use back::{
         *,
     },
 };
-
+use log::{error, info, trace};
+use mongodb::bson::oid::ObjectId;
+use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 const INDEX_HTML: &str = "./static/about.html";
 ///Main doc page
