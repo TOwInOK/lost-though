@@ -171,7 +171,7 @@ impl Cli {
     pub async fn smtp() -> (String, String, String, String) {
         let cli = Cli::parse();
         (
-            cli.smtp_address_from.unwrap_or(cli.smtp_login.clone()),
+            cli.smtp_address_from.unwrap_or_else(|| cli.smtp_login.clone()),
             cli.smtp_address,
             cli.smtp_login,
             cli.smtp_password,
