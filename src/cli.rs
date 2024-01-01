@@ -107,13 +107,21 @@ impl Cli {
             || cli.smtp_login.clone(),
             |value| {
                 if value.trim().is_empty() {
+                    trace!("SMPT sender is empty, clone SMPT login.");
                     cli.smtp_login.clone()
                 } else {
+                    trace!("SMPT sender is {}", &value);
                     value
                 }
             },
         );
-
+        trace!(
+            "SMTP data is: sender: {}\nprovider: {}\nlogin: {}\npassword: {}",
+            &smtp_address_from,
+            &cli.smtp_address,
+            &cli.smtp_login,
+            &cli.smtp_password
+        );
         (
             smtp_address_from,
             cli.smtp_address,
