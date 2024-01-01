@@ -1,5 +1,5 @@
 use clap::Parser;
-use log::{debug, info, trace, warn};
+use log::trace;
 //Parse args from env.
 
 /// Get args from env
