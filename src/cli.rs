@@ -1,5 +1,5 @@
 use clap::Parser;
-use log::debug;
+use log::{debug, info, trace, warn};
 //Parse args from env.
 
 /// Get args from env
@@ -54,6 +54,7 @@ pub struct Cli {
 impl Cli {
     //?? я кстати не помню зачем. Типо асинк вызов
     pub async fn push() -> Self {
+        trace!("Pars args from env");
         Cli::parse()
     }
     pub async fn mongo_adress() -> String {
@@ -61,16 +62,17 @@ impl Cli {
         let login = cli.mongo_login.unwrap_or_default();
         let password = cli.mongo_password.unwrap_or_default();
         let auth_part = if !login.is_empty() && !password.is_empty() {
+            trace!("auth for mongo db is exist -> {}:{}@", &login, &password);
             format!("{}:{}@", login, password)
         } else {
+            trace!("auth for mongo db is't exist");
             String::new()
         };
-
         let output = format!(
             "mongodb://{}{}:{}",
             auth_part, cli.mongo_address, cli.mongo_port
         );
-        debug!("{output}");
+        trace!("MongoDB address -> {}", output);
         output
     }
     pub async fn web_port() -> u16 {
