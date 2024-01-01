@@ -80,7 +80,7 @@ impl Cli {
         trace!("Fetching: WEB port -> {}", &cli.web_port);
         cli.web_port
     }
-    pub async fn redis_adress() -> String {
+    pub async fn redis_address() -> String {
         let cli = Cli::parse();
         let output = format!(
             "redis://{}:{}@{}:{}",
@@ -89,6 +89,7 @@ impl Cli {
             cli.redis_address,
             cli.redis_port
         );
+        trace!("Fetching: REDIS ADDress -> {}", &output);
         output
     }
     pub async fn redis_adress_simple() -> String {
