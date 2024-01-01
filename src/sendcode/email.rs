@@ -11,7 +11,7 @@ use std::{error::Error, fmt};
 ///get req for creat code and put it in redis
 pub async fn send_password_code(email_to: String, name: String) -> Result<(), Box<dyn Error>> {
     let code: u16 = random();
-    let connection = Cli::redis_adress_simple().await;
+    let connection = Cli::redis_address_simple().await;
     let client = redis::Client::open(connection)?;
     let mut con = client.get_connection()?;
     let smtp = Cli::smtp().await;
@@ -58,7 +58,7 @@ pub async fn send_password_code(email_to: String, name: String) -> Result<(), Bo
 
 ///Check redis by code for name
 pub async fn check_code(code: usize, name: String) -> Result<(), Box<dyn Error>> {
-    let connection = Cli::redis_adress_simple().await;
+    let connection = Cli::redis_address_simple().await;
     let client = redis::Client::open(connection)?;
     let mut con = client.get_connection()?;
     let check_code: Option<u16> = con.hget(&name, "code")?;

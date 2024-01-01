@@ -89,12 +89,15 @@ impl Cli {
             cli.redis_address,
             cli.redis_port
         );
-        trace!("Fetching: REDIS ADDress -> {}", &output);
+        //RA
+        trace!("Fetching: Redis Address -> {}", &output);
         output
     }
-    pub async fn redis_adress_simple() -> String {
+    pub async fn redis_address_simple() -> String {
         let cli = Cli::parse();
         let output = format!("redis://{}/", cli.redis_address);
+        //RSA
+        trace!("Fetching: Redis Simple Address -> {}", &output);
         output
     }
     pub async fn smtp() -> (String, String, String, String) {
