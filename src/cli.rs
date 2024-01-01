@@ -77,6 +77,7 @@ impl Cli {
     }
     pub async fn web_port() -> u16 {
         let cli = Cli::parse();
+        trace!("Fetching: WEB port -> {}", &cli.web_port);
         cli.web_port
     }
     pub async fn redis_adress() -> String {
