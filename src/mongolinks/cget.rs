@@ -1,6 +1,6 @@
+use crate::cli::Cli;
 use crate::posts::post::Post;
 use crate::users::user::User;
-use crate::Cli;
 use mongodb::{options::ClientOptions, Client, Collection};
 
 ///Создание соединения с базой данных к полям подбазе users в базе Main

@@ -2,6 +2,7 @@ use actix_files as fs;
 use actix_web::{delete, get, post, put, web, HttpRequest, HttpResponse, Responder};
 use back::{
     autentifications::auth::Auth,
+    cli::Cli,
     comments::{comment::Comment, comment_add, comment_delete},
     mongolinks::cget::{get_connection_posts, get_connection_users},
     posts::{post::PostCreate, *},

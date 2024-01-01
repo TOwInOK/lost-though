@@ -1,4 +1,4 @@
-use crate::Cli;
+use crate::cli::Cli;
 use lettre::{
     message::header::ContentType, transport::smtp::authentication::Credentials, Message,
     SmtpTransport, Transport,
