@@ -8,7 +8,7 @@ COPY ./Cargo.lock ./Cargo.lock
 COPY ./static ./static
 COPY ./src ./src
 #BUILD
-RUN cargo build --release --verbose
+RUN cargo build --release
 
 
 FROM ubuntu:noble
