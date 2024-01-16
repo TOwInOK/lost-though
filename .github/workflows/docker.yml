@@ -54,13 +54,4 @@ jobs:
        tags: ghcr.io/towinok/monotipe:amd,ghcr.io/towinok/monotipe:${{ github.sha }}
        cache-from: type=gha
        cache-to: type=gha,mode=max
-   - name: Build and push Docker image ARM
-     uses: docker/build-push-action@v5
-     with:
-       context: .
-       push: true
-       platforms: linux/arm64
-       tags: ghcr.io/towinok/monotipe:arm,ghcr.io/towinok/monotipe:${{ github.sha }}
-       cache-from: type=gha
-       cache-to: type=gha,mode=max
        
