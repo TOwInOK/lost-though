@@ -45,13 +45,22 @@ jobs:
        username: ${{ github.repository_owner }}
        password: ${{ secrets.GITHUB_TOKEN }}
 
-   - name: Build and push Docker image
+   - name: Build and push Docker image AMD
      uses: docker/build-push-action@v5
      with:
        context: .
        push: true
-       platforms: linux/amd64,linux/arm64
-       tags: ghcr.io/towinok/monotipe:latest,ghcr.io/towinok/monotipe:${{ github.sha }}
+       platforms: linux/amd64
+       tags: ghcr.io/towinok/monotipe:amd,ghcr.io/towinok/monotipe:${{ github.sha }}
+       cache-from: type=gha
+       cache-to: type=gha,mode=max
+   - name: Build and push Docker image ARM
+     uses: docker/build-push-action@v5
+     with:
+       context: .
+       push: true
+       platforms: linux/arm64
+       tags: ghcr.io/towinok/monotipe:arm,ghcr.io/towinok/monotipe:${{ github.sha }}
        cache-from: type=gha
        cache-to: type=gha,mode=max
        
