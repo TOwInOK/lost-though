@@ -16,6 +16,7 @@ FROM ubuntu:noble
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     libssl-dev\
+    libterm-readline-perl \
     ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 #ARGS
