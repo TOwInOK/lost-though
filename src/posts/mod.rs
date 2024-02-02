@@ -73,7 +73,7 @@ pub async fn post_edit(
 ///Удаление поста
 pub async fn post_delete(
     collection: &Collection<Post>,
-    post_id: String,
+    post_id: ObjectId,
     author: String,
 ) -> Result<DeleteResult, Error> {
     let filter = doc! {

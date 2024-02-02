@@ -216,8 +216,12 @@ pub async fn create(p: web::Json<RequsetPost>) -> HttpResponse {
 #[delete("/{post}/delete")]
 pub async fn post_deleter(id: web::Path<String>, p: web::Json<Auth>) -> HttpResponse {
     let collection = get_connection_posts().await;
+    let id = match ObjectId::from_str(&id) {
+        Ok(oid) => oid,
+        Err(_) => return HttpResponse::BadRequest().body("Invalid ObjectId"),
+    };
     if p.0.validate().await {
-        match post_delete(&collection, id.to_string(), p.name.clone()).await {
+        match post_delete(&collection, id, p.name.clone()).await {
             Ok(_v) => HttpResponse::Ok().body("Post deleted"),
             Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
         }
