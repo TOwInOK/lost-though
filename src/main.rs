@@ -8,6 +8,7 @@ use std::env;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let web_port = Cli::web_port().await;
+    info!("Version: 1");
     info!("Env values:");
     pretty_env_logger::init();
     for (key, value) in env::vars() {
