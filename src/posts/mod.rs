@@ -48,7 +48,7 @@ pub async fn post_edit(
     author: String,
 ) -> Result<UpdateResult, Box<Error>> {
     let filter = doc! {
-        "_id": post.id,
+        "_id": &post.id,
         "author": author
     };
     let update = doc! {
@@ -74,9 +74,11 @@ pub async fn post_edit(
 pub async fn post_delete(
     collection: &Collection<Post>,
     post_id: String,
+    author: String,
 ) -> Result<DeleteResult, Error> {
     let filter = doc! {
         "_id": &post_id,
+        "author": author
     };
 
     info!("Deleting post {}", post_id);
