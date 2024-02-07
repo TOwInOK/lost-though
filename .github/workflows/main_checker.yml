@@ -3,6 +3,8 @@ name: Build and Push Docker image
 on:
   push:
     branches: [main]
+env:
+  RUSTFLAGS: "-Dwarnings"
 
 jobs:
   tests:

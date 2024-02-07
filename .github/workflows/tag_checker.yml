@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - "v*.*.*"
+env:
+  RUSTFLAGS: "-Dwarnings"
 
 jobs:
   tests:
