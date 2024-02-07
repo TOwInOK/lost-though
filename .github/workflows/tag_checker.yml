@@ -69,6 +69,6 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/towinok/monotipe:${{ github.ref.split('/').last() }}
+          tags: ghcr.io/towinok/monotipe:${{ github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
