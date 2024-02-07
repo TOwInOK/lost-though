@@ -33,23 +33,36 @@ async fn indexx(path: web::Path<String>) -> actix_web::Result<fs::NamedFile> {
 }
 ///создание пользователя | crate the user by `<User>`
 #[post("/create")]
-pub async fn create_user(u: web::Json<User>) -> HttpResponse {
-    let collection = get_connection_users().await;
+pub async fn create_user(u: web::Json<User>) -> impl Responder {
+    let collection = match get_connection_users().await {
+        Ok(collection) => collection,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
+        }
+    };
     match user_create(&collection, u.into_inner()).await {
         Ok(_) => {
-            println!("User created");
-            HttpResponse::Created().body("User created")
+            println!("Пользователь создан");
+            HttpResponse::Created().body("Пользователь создан")
         }
         Err(e) => {
             error!("{:?}", e);
-            HttpResponse::BadRequest().body(e.to_string())
+            HttpResponse::InternalServerError().body(e.to_string())
         }
     }
 }
+
 ///инфа о пользователе | get info by name of user
 #[get("/{name}")]
 pub async fn user(name: web::Path<String>) -> HttpResponse {
-    let collection = get_connection_users().await;
+    let collection = match get_connection_users().await {
+        Ok(collection) => collection,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
+        }
+    };
     match user_get(collection, name.to_string()).await {
         Ok(Some(user)) => {
             let anonymus_user = UserMin {
@@ -66,11 +79,18 @@ pub async fn user(name: web::Path<String>) -> HttpResponse {
         Err(e) => HttpResponse::BadRequest().body(e.to_string()),
     }
 }
+
 ///Get all user info by name + Auth
 ///Also you can auth throw this path
 #[get("/{name}/settings")]
 pub async fn get_user_settings(name: web::Path<String>, u: web::Json<Auth>) -> HttpResponse {
-    let collection = get_connection_users().await;
+    let collection = match get_connection_users().await {
+        Ok(collection) => collection,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
+        }
+    };
     match user_get(collection, name.to_string()).await {
         Ok(Some(i)) => {
             if i.validate_anonimus(&u) {
@@ -85,6 +105,7 @@ pub async fn get_user_settings(name: web::Path<String>, u: web::Json<Auth>) -> H
         Err(e) => HttpResponse::BadRequest().body(e.to_string()),
     }
 }
+
 ///Change pass
 /// req: `<String>` user name + `UserChanger`
 #[put("/{name}/settings/changepass")]
@@ -92,7 +113,13 @@ pub async fn pass_changer(
     name: web::Path<String>,
     mut auth: web::Json<UserChangerAuth>,
 ) -> HttpResponse {
-    let collection = get_connection_users().await;
+    let collection = match get_connection_users().await {
+        Ok(collection) => collection,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
+        }
+    };
     if auth.auth.password.is_empty() {
         return HttpResponse::BadRequest().body("Password is empty");
     }
@@ -112,7 +139,7 @@ pub async fn pass_changer(
             }
         }
         Ok(None) => HttpResponse::NotFound().body("Nothing of your user found"),
-        Err(_e) => HttpResponse::BadRequest().body("This structure is't user"),
+        Err(_) => HttpResponse::BadRequest().body("This structure is't user"),
     }
 }
 
@@ -121,7 +148,13 @@ pub async fn user_changer(
     name: web::Path<String>,
     mut auth: web::Json<UserChanger>,
 ) -> HttpResponse {
-    let collection = get_connection_users().await;
+    let collection = match get_connection_users().await {
+        Ok(collection) => collection,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
+        }
+    };
     if auth.user.password.is_empty() {
         return HttpResponse::BadRequest().body("Password is empty");
     }
@@ -144,35 +177,58 @@ pub async fn user_changer(
         Err(_e) => HttpResponse::BadRequest().body("This structure is't user"),
     }
 }
+
 ///выдаём все посты пользователя
 #[get("/{name}/posts")]
 pub async fn postall(name: web::Path<String>) -> HttpResponse {
-    let collection = get_connection_posts().await;
-    match post_getall(&collection, name.to_string()).await {
-        Ok(v) => HttpResponse::Ok().json(v),
-        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    match get_connection_posts().await {
+        Ok(collection) => match post_getall(&collection, name.to_string()).await {
+            Ok(v) => HttpResponse::Ok().json(v),
+            Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+        },
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            HttpResponse::InternalServerError().body(e.to_string())
+        }
     }
 }
 ///удаляем пользоателя
 ///Конечно забавно что пользователь может удалять себя
 #[delete("/delete")]
 pub async fn delete_user(u: web::Json<Auth>) -> HttpResponse {
-    let collection = get_connection_users().await;
-    let collection2 = get_connection_posts().await;
-    if u.validate().await {
-        match user_delete(&collection, &collection2, u.0).await {
-            Ok(_) => HttpResponse::Ok().body("User deleted"),
-            Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    let users = match get_connection_users().await {
+        Ok(users) => users,
+        Err(e) => {
+            error!("Ошибка при получении коллекции пользователей: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
         }
-    } else {
-        HttpResponse::Forbidden().body("Wrong user data for auth")
+    };
+    let posts = match get_connection_posts().await {
+        Ok(posts) => posts,
+        Err(e) => {
+            error!("Ошибка при получении коллекции постов: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
+        }
+    };
+    if !u.validate().await {
+        return HttpResponse::Forbidden().body("Wrong user data for auth");
+    }
+    match user_delete(&users, &posts, u.0).await {
+        Ok(_) => HttpResponse::Ok().body("User deleted"),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
 }
 
 ///выдача поста по id
 #[get("/{post_id}")]
 pub async fn post(post_id: web::Path<String>) -> HttpResponse {
-    let collection = get_connection_posts().await;
+    let collection = match get_connection_posts().await {
+        Ok(e) => e,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
+        }
+    };
     let post_id = match ObjectId::from_str(&post_id) {
         Ok(oid) => oid,
         Err(_) => return HttpResponse::BadRequest().body("Invalid ObjectId"),
@@ -187,53 +243,76 @@ pub async fn post(post_id: web::Path<String>) -> HttpResponse {
 ///Заменть на сегментарное редактирование.
 #[put("/edit")]
 pub async fn post_editor(p: web::Json<RequsetPost>) -> HttpResponse {
-    let collection = get_connection_posts().await;
-    if p.0.auth.validate().await {
-        match post_edit(&collection, p.0.post, p.0.auth.name.to_string()).await {
-            Ok(_v) => HttpResponse::Ok().body("Post edited"),
-            Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    let collection = match get_connection_posts().await {
+        Ok(e) => e,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
         }
-    } else {
-        HttpResponse::Forbidden().body("Wrong user data for auth")
+    };
+
+    if !p.0.auth.validate().await {
+        return HttpResponse::Forbidden().body("Wrong user data for auth");
+    }
+    match post_edit(&collection, p.0.post, p.0.auth.name.to_string()).await {
+        Ok(_v) => HttpResponse::Ok().body("Post edited"),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
 }
 
 ///Создаём пост принимая RequsetPost
 #[post("/create")]
 pub async fn create(p: web::Json<RequsetPost>) -> HttpResponse {
-    let collection = get_connection_posts().await;
-    if p.0.auth.validate().await {
-        match post_create(&collection, p.0.post).await {
-            Ok(v) => HttpResponse::Ok().json(v),
-            Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    let collection = match get_connection_posts().await {
+        Ok(e) => e,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
         }
-    } else {
-        HttpResponse::Forbidden().body("Wrong user data for auth")
+    };
+
+    if !p.0.auth.validate().await {
+        return HttpResponse::Forbidden().body("Wrong user data for auth");
+    }
+    match post_create(&collection, p.0.post).await {
+        Ok(v) => HttpResponse::Ok().json(v),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
 }
 
 ///удаляем пост
 #[delete("/{post}/delete")]
 pub async fn post_deleter(id: web::Path<String>, p: web::Json<Auth>) -> HttpResponse {
-    let collection = get_connection_posts().await;
     let id = match ObjectId::from_str(&id) {
         Ok(oid) => oid,
         Err(_) => return HttpResponse::BadRequest().body("Invalid ObjectId"),
     };
-    if p.0.validate().await {
-        match post_delete(&collection, id, p.name.clone()).await {
-            Ok(_v) => HttpResponse::Ok().body("Post deleted"),
-            Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    if !p.0.validate().await {
+        return HttpResponse::Forbidden().body("Wrong user data for auth");
+    }
+    let collection = match get_connection_posts().await {
+        Ok(e) => e,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
         }
-    } else {
-        HttpResponse::Forbidden().body("Wrong user data for auth")
+    };
+    match post_delete(&collection, id, p.name.clone()).await {
+        Ok(_v) => HttpResponse::Ok().body("Post deleted"),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
 }
 
 ///Выдача всех постов
 #[get("/page/all")]
 pub async fn post_all() -> HttpResponse {
-    let collection = get_connection_posts().await;
+    let collection = match get_connection_posts().await {
+        Ok(e) => e,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
+        }
+    };
     match post_getall_all(&collection).await {
         Ok(v) => HttpResponse::Ok().json(v),
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
@@ -243,7 +322,13 @@ pub async fn post_all() -> HttpResponse {
 ///Выдача постов от 0 до n
 #[get("/page/{n}")]
 pub async fn post_all_page(n: web::Path<usize>) -> HttpResponse {
-    let collection = get_connection_posts().await;
+    let collection = match get_connection_posts().await {
+        Ok(e) => e,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
+        }
+    };
     match post_get_page(&collection, *n).await {
         Ok(v) => HttpResponse::Ok().json(v),
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
@@ -253,7 +338,13 @@ pub async fn post_all_page(n: web::Path<usize>) -> HttpResponse {
 ///Строка делится на подстроки и выполняется поиск по подстрокам
 #[get("/vague/{search}")]
 pub async fn search_vague_scope(search: web::Path<String>) -> HttpResponse {
-    let collection = get_connection_posts().await;
+    let collection = match get_connection_posts().await {
+        Ok(e) => e,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
+        }
+    };
     match post_search_vague(&collection, search.to_string()).await {
         Ok(v) => HttpResponse::Ok().json(v),
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
@@ -263,7 +354,13 @@ pub async fn search_vague_scope(search: web::Path<String>) -> HttpResponse {
 ///Что ищём, то и находим.
 #[get("/fair/{search}")]
 pub async fn search_fair_scope(search: web::Path<String>) -> HttpResponse {
-    let collection = get_connection_posts().await;
+    let collection = match get_connection_posts().await {
+        Ok(e) => e,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
+        }
+    };
     match post_search_fair(&collection, search.to_string()).await {
         Ok(v) => HttpResponse::Ok().json(v),
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
@@ -278,7 +375,13 @@ pub async fn search_vague_scope_pages(req: HttpRequest) -> HttpResponse {
     let search = req.match_info().get("search").unwrap();
     let page = req.match_info().get("page").unwrap();
     let page = page.parse::<usize>().unwrap();
-    let collection = get_connection_posts().await;
+    let collection = match get_connection_posts().await {
+        Ok(e) => e,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
+        }
+    };
     match post_search_vague_page(&collection, search.to_string(), page).await {
         Ok(v) => HttpResponse::Ok().json(v),
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
@@ -293,7 +396,13 @@ pub async fn search_fair_scope_pages(req: HttpRequest) -> HttpResponse {
     let search = req.match_info().get("search").unwrap();
     let page = req.match_info().get("page").unwrap();
     let page = page.parse::<usize>().unwrap();
-    let collection = get_connection_posts().await;
+    let collection = match get_connection_posts().await {
+        Ok(e) => e,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
+        }
+    };
     match post_search_fair_page(&collection, search.to_string(), page).await {
         Ok(v) => HttpResponse::Ok().json(v),
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
@@ -312,17 +421,22 @@ pub async fn search_fair_scope_pages(req: HttpRequest) -> HttpResponse {
 /// req `<String>` (name of user)
 #[get("/code/{name}")]
 pub async fn code_send(name: web::Path<String>) -> HttpResponse {
-    let collection = get_connection_users().await;
-    match user_get(collection, name.to_string()).await {
+    let collection = match get_connection_users().await {
+        Ok(e) => e,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
+        }
+    };
+    let local_user = match user_get(collection, name.to_string()).await {
         Ok(v) => match v {
-            Some(i) => {
-                match send_password_code(i.email, name.clone().to_string().to_lowercase()).await {
-                    Ok(_) => HttpResponse::Ok().body("Code send"),
-                    Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
-                }
-            }
-            None => HttpResponse::NotFound().body("User not found"),
+            Some(i) => i,
+            None => return HttpResponse::NotFound().body("User not found"),
         },
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+    match send_password_code(local_user.email, name.clone().to_string().to_lowercase()).await {
+        Ok(_) => HttpResponse::Ok().body("Code send"),
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
 }
@@ -332,19 +446,30 @@ pub async fn code_get(code: web::Path<usize>, auth: web::Json<Auth>) -> HttpResp
     if auth.password.is_empty() {
         return HttpResponse::BadRequest().body("Password is empty");
     }
-    let collection = get_connection_users().await;
-    match user_get(collection.clone(), auth.name.to_string()).await {
+    let collection = match get_connection_users().await {
+        Ok(e) => e,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
+        }
+    };
+
+    let _ = match user_get(collection.clone(), auth.name.to_string()).await {
         Ok(v) => match v {
-            Some(_) => match check_code(*code, auth.name.to_string().to_lowercase()).await {
-                Ok(_) => match user_change_pass(&collection, auth.0).await {
-                    Ok(_) => HttpResponse::Ok().body("password changed"),
-                    Err(e) => HttpResponse::NotFound().body(e.to_string()),
-                },
-                Err(e) => HttpResponse::NotFound().body(e.to_string()),
-            },
-            None => HttpResponse::NoContent().body("User not found"),
+            Some(local_user) => {
+                match check_code(*code, local_user.name.to_lowercase()).await {
+                    Ok(_) => (), //just check.
+                    Err(e) => return HttpResponse::NotFound().body(e.to_string()),
+                }
+            }
+            None => return HttpResponse::NoContent().body("User not found"),
         },
-        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
+    };
+
+    match user_change_pass(&collection, auth.0).await {
+        Ok(_) => HttpResponse::Ok().body("password changed"),
+        Err(e) => HttpResponse::NotFound().body(e.to_string()),
     }
 }
 
@@ -353,19 +478,24 @@ pub async fn add_comment(
     post_id: web::Path<String>,
     comment: web::Json<CommentAdd>,
 ) -> HttpResponse {
-    let collection = get_connection_posts().await;
-    //check name in auth and name in comment, and validate it.
-    if comment.0.auth.validate().await && comment.0.auth.name == comment.0.comment.author {
-        let post_id = match ObjectId::from_str(&post_id) {
-            Ok(oid) => oid,
-            Err(_) => return HttpResponse::BadRequest().body("Invalid ObjectId"),
-        };
-        match comment_add(collection, post_id, comment.0.comment).await {
-            Ok(v) => HttpResponse::Ok().body(v.to_string()),
-            Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    let collection = match get_connection_posts().await {
+        Ok(e) => e,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
         }
-    } else {
-        HttpResponse::Forbidden().body("Auth fail")
+    };
+    //check name in auth and name in comment, and validate it.
+    if !comment.0.auth.validate().await && comment.0.auth.name != comment.0.comment.author {
+        return HttpResponse::Forbidden().body("Auth fail");
+    }
+    let post_id = match ObjectId::from_str(&post_id) {
+        Ok(oid) => oid,
+        Err(_) => return HttpResponse::BadRequest().body("Invalid ObjectId"),
+    };
+    match comment_add(collection, post_id, comment.0.comment).await {
+        Ok(v) => HttpResponse::Ok().body(v.to_string()),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
 }
 
@@ -376,7 +506,13 @@ pub async fn delete_comment(
     post_id: web::Path<String>,
     comment: web::Json<CommentDelete>,
 ) -> HttpResponse {
-    let collection = get_connection_posts().await;
+    let collection = match get_connection_posts().await {
+        Ok(e) => e,
+        Err(e) => {
+            error!("Ошибка при получении коллекции: {:?}", e);
+            return HttpResponse::InternalServerError().body(e.to_string());
+        }
+    };
     //try to convert from String to ObjectID
     let post_id = match ObjectId::from_str(&post_id) {
         Ok(oid) => oid,
@@ -387,13 +523,12 @@ pub async fn delete_comment(
         Ok(oid) => oid,
         Err(_) => return HttpResponse::BadRequest().body("Invalid post ID"),
     };
-    if comment.0.auth.validate().await {
-        match comment_delete(collection, post_id, comment_id).await {
-            Ok(_) => HttpResponse::Ok().body("comment deleted"),
-            Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
-        }
-    } else {
-        HttpResponse::Forbidden().body("Wront data for auth")
+    if !comment.0.auth.validate().await {
+        return HttpResponse::Forbidden().body("Wront data for auth");
+    }
+    match comment_delete(collection, post_id, comment_id).await {
+        Ok(_) => HttpResponse::Ok().body("comment deleted"),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
 }
 

@@ -1,6 +1,7 @@
 use crate::mongolinks::cget::get_connection_users;
 use crate::users::user::User;
 use crate::users::user_get;
+use log::error;
 use serde::{Deserialize, Serialize};
 
 //Структура приходящая от клиента, при минимальном запросе.
@@ -20,11 +21,16 @@ impl Auth {
     }
     ///Сравниваем полученные строки с стороками в базе
     pub async fn validate(&self) -> bool {
-        let collection = get_connection_users().await;
-        match user_get(collection, self.name.clone()).await {
-            Ok(Some(user)) => user.password == self.password,
-            Ok(None) => false,
-            Err(_) => false,
+        match get_connection_users().await {
+            Ok(collection) => match user_get(collection, self.name.clone()).await {
+                Ok(Some(user)) => user.password == self.password,
+                Ok(None) => false,
+                Err(_) => false,
+            },
+            Err(e) => {
+                error!("Validate error: {}", e);
+                false
+            }
         }
     }
 }

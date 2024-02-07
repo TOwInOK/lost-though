@@ -4,6 +4,7 @@ pub mod comments;
 pub mod mongolinks;
 pub mod posts;
 pub mod sendcode;
+mod tests;
 pub mod users;
 use crate::users::user::Role;
 use crate::users::user::User;
