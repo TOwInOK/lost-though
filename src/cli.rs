@@ -36,7 +36,7 @@ pub struct Cli {
     #[arg(long = "redis-address", default_value_t = format!("127.0.0.1"), env = "REDIS_ADDRESS")]
     redis_address: String,
 
-    ////SMTP
+    ///SMTP
     /// Login smpt
     #[arg(long = "smtp-login", default_value_t = format!("ChangeMe"), env = "SMTP_LOGIN")]
     smtp_login: String,
