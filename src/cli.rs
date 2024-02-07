@@ -38,13 +38,13 @@ pub struct Cli {
 
     ////SMTP
     /// Login smpt
-    #[arg(long = "smtp-login", env = "SMTP_LOGIN")]
+    #[arg(long = "smtp-login", default_value_t = format!("ChangeMe"), env = "SMTP_LOGIN")]
     smtp_login: String,
     /// Password (or secure code) smtp
-    #[arg(long = "smtp-password", env = "SMTP_PASSWORD")]
+    #[arg(long = "smtp-password", default_value_t = format!("ChangeMe"), env = "SMTP_PASSWORD")]
     smtp_password: String,
     /// adress smpt
-    #[arg(long = "smtp-adress", env = "SMTP_ADDRESS")]
+    #[arg(long = "smtp-adress",default_value_t = format!("ChangeMe"), env = "SMTP_ADDRESS")]
     smtp_address: String,
     ///sending from client of smtp if login is different
     #[arg(long = "smtp-adress-from", env = "SMTP_ADDRESS_FROM")]
