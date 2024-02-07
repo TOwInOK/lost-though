@@ -454,7 +454,7 @@ pub async fn code_get(code: web::Path<usize>, auth: web::Json<Auth>) -> HttpResp
         }
     };
 
-    let _ = match user_get(collection.clone(), auth.name.to_string()).await {
+    match user_get(collection.clone(), auth.name.to_string()).await {
         Ok(v) => match v {
             Some(local_user) => {
                 match check_code(*code, local_user.name.to_lowercase()).await {
