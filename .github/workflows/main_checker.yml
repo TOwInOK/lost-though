@@ -68,6 +68,6 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/towinok/monotipe:latest, ghcr.io/towinok/monotipe:${{ github.sha }}
+          tags: ghcr.io/towinok/monotipe:latest, ghcr.io/towinok/monotipe:${{ github.ref.split('/').last() }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
